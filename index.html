@@ -3,273 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Live Sports OTT Platform (Iframe Version)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
+    <title>Professional HLS Player</title>
+    
+    <!-- Video.js Styles -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #040712;
-        }
-        /* Custom Scrollbar for Premium Sidebar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0b0f19;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1f2937;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #22c55e;
-        }
+        body { margin: 0; background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .video-container { width: 100%; max-width: 800px; }
+        .video-js { width: 100%; height: auto; aspect-ratio: 16/9; }
     </style>
 </head>
-<body class="text-gray-100 min-h-screen flex flex-col overflow-x-hidden">
+<body>
 
-    <header class="border-b border-gray-800 bg-[#060b21] px-4 py-3 sticky top-0 z-50 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="bg-gradient-to-r from-green-500 to-emerald-600 p-2 rounded-lg text-black font-bold tracking-wider text-sm">
-                <i class="fa-solid fa-bolt mr-1"></i>LIVE Sports OTT
-            </div>
-            <span class="text-xs text-gray-400 hidden sm:inline-block">| Ultra HD Iframe Streaming</span>
-        </div>
-        <div class="flex items-center space-x-4">
-            <span class="flex items-center text-xs bg-red-500/10 text-red-400 px-2.5 py-1 rounded-full border border-red-500/20 font-semibold animate-pulse">
-                <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>LIVE FEED
-            </span>
-        </div>
-    </header>
+    <div class="video-container">
+        <video id="my-hls-player" class="video-js vjs-big-play-centered" controls preload="auto">
+            <!-- আপনার HLS বা .m3u8 লিংকটি এখানে বসান -->
+            <source src="http://10.222.222.222:8083/TSportsHD/tracks-v1a1/mono.m3u8?token=5d079e79249294f92a5b594cd80f804e0a24a25c-3aaa6e6e236407ba2d7d030f2fc61c57-1781526052-1781515252" type="application/x-mpegURL">
+        </video>
+    </div>
 
-    <main class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 max-w-7xl mx-auto w-full">
-        
-        <div id="playerContainer" class="lg:col-span-2 flex flex-col space-y-4 transition-all duration-500">
-            
-            <div class="relative aspect-video w-full rounded-2xl overflow-hidden border border-gray-800 bg-black shadow-2xl shadow-green-950/10">
-                <iframe 
-                    id="ott-iframe" 
-                    src="" 
-                    class="absolute top-0 left-0 w-full h-full border-0" 
-                    allowfullscreen="true" 
-                    webkitallowfullscreen="true" 
-                    mozallowfullscreen="true"
-                    scrolling="no"
-                    allow="autoplay; encrypted-media">
-                </iframe>
-            </div>
-
-            <div class="bg-[#0b132b] border border-gray-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-2">
-                    <button onclick="hotReloadIframe()" class="bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 px-3 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5" title="Fix Stream / Reload Iframe">
-                        <i class="fa-solid fa-rotate"></i> Reload 
-                    </button>
-                </div>
-
-                <div class="flex items-center space-x-2">
-                    <button onclick="toggleTheaterMode()" id="theaterBtn" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5" title="Theater Mode">
-                        <i class="fa-solid fa-expand"></i> Theater Mode
-                    </button>
-                </div>
-            </div>
-
-            <div class="bg-[#060b21]/50 border border-gray-800/80 rounded-xl p-5 flex items-center justify-between">
-                <div>
-                    <h1 id="activeChannelName" class="text-xl md:text-2xl font-bold tracking-tight text-white">Loading Channel...</h1>
-                    <p class="text-gray-400 text-xs mt-1 flex items-center gap-2">
-                        <span class="bg-green-500/10 text-green-400 px-2 py-0.5 rounded text-[10px] border border-green-500/20 font-bold uppercase tracking-wider">Iframe Source</span>
-                        • Embedded Player Stream
-                    </p>
-                </div>
-                <div class="text-right">
-                    <span class="text-green-500 font-bold text-lg block" id="viewerCounter">12.4K</span>
-                    <span class="text-[10px] text-gray-400 uppercase tracking-widest font-medium">Watching Now</span>
-                </div>
-            </div>
-        </div>
-
-        <div id="sidebarContainer" class="lg:col-span-1 flex flex-col space-y-4 h-fit transition-all duration-500">
-            <div class="bg-[#060b21] border border-gray-800 rounded-2xl p-4 flex flex-col h-[520px]">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
-                    <h2 class="font-bold text-sm tracking-wider uppercase text-gray-300 flex items-center gap-2">
-                        <i class="fa-solid fa-list-ul text-green-500"></i> Channel Playlist
-                    </h2>
-                    <span id="totalChannelsBadge" class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md font-semibold">0 Channels</span>
-                </div>
-
-                <div id="playlistContainer" class="flex-1 overflow-y-auto space-y-2.5 pr-1">
-                    </div>
-            </div>
-        </div>
-
-    </main>
-
-    <footer class="mt-auto py-4 border-t border-gray-900 bg-[#02040a] text-center text-xs text-gray-500">
-        &copy; 2026 Premium OTT Engine. Powered by Advanced Responsive Embedded Architecture.
-    </footer>
-
+    <!-- Scripts -->
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-hls@5.15.0/dist/videojs-contrib-hls.min.js"></script>
+    
     <script>
-        // Array containing your exact iframe URLs and quality badges
-        const playlistData = [
-            {
-                id: "TSports",
-                name: "T-Sports BD HD",
-                logo: "https://raw.githubusercontent.com/ashikur-r/logos/main/tsports.png",
-                group: "Sports",
-                badge: "Ultra HD 1080p",
-                src: "http://murgi.live/live-tv/tsports.html"
-            },
-            {
-                id: "SomoyTv",
-                name: "Somoy TV Live",
-                logo: "https://logo.clearbit.com/somoynews.tv",
-                group: "News",
-                badge: "Live Feed",
-                src: "http://murgi.live/live-tv/somoy-tv.html"
-            },
-            {
-                id: "Sports1",
-                name: "Sports Server 1 (Unite8)",
-                logo: "https://cdn-icons-png.flaticon.com/512/5351/5351486.png",
-                group: "Sports",
-                badge: "Premium HD",
-                src: "http://murgi.live/live-tv/unite8-sports-2.html"
-            },
-            {
-                id: "PTVSports",
-                name: "PTV Sports Feed",
-                logo: "https://logo.clearbit.com/ptv.com.pk",
-                group: "Sports",
-                badge: "1080p Stream",
-                src: "http://murgi.live/live-tv/ptv.html"
-            }
-        ];
-
-        let activeChannelId = "";
-        let isTheaterMode = false;
-
-        // Initialize Layout on DOM Load
-        document.addEventListener("DOMContentLoaded", () => {
-            renderPlaylist();
-            document.getElementById('totalChannelsBadge').innerText = `${playlistData.length} Channels`;
-            
-            // Auto load first iframe inside playlist array
-            if(playlistData.length > 0) {
-                switchChannel(playlistData[0].id);
-            }
+        // প্লেয়ার ইনিশিয়ালাইজেশন
+        var player = videojs('my-hls-player');
+        
+        // অটো প্লে অন করা
+        player.ready(function() {
+            this.play();
         });
-
-        // Function to build and inject the Interactive Premium Sidebar rows
-        function renderPlaylist() {
-            const container = document.getElementById('playlistContainer');
-            container.innerHTML = "";
-
-            playlistData.forEach(channel => {
-                const row = document.createElement('button');
-                row.id = `btn-${channel.id}`;
-                row.className = "w-full text-left bg-[#0c1226]/60 hover:bg-[#111936] border border-gray-800/60 p-2.5 rounded-xl flex items-center justify-between transition-all duration-300 group focus:outline-none";
-                row.onclick = () => switchChannel(channel.id);
-
-                row.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-11 h-11 bg-white/5 rounded-lg flex items-center justify-center p-1.5 overflow-hidden border border-gray-800/40 group-hover:border-gray-700/80 transition-colors">
-                            <img src="${channel.logo}" alt="${channel.name}" class="max-w-full max-h-full object-contain" onerror="this.src='https://cdn-icons-png.flaticon.com/512/5351/5351486.png'">
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-200 group-hover:text-green-400 transition-colors line-clamp-1">${channel.name}</h3>
-                            <p class="text-[11px] text-gray-400 mt-0.5"><i class="fa-solid fa-layer-group text-gray-500 mr-1"></i>${channel.group}</p>
-                        </div>
-                    </div>
-                    <span class="text-[9px] font-bold uppercase tracking-wider bg-gray-800/60 text-gray-400 px-2 py-1 rounded border border-gray-700/40 group-hover:border-green-500/30 group-hover:text-green-400 transition-all">
-                        ${channel.badge}
-                    </span>
-                `;
-                container.appendChild(row);
-            });
-        }
-
-        // Handles Seamless Switching of Iframe without full page reload
-        function switchChannel(channelId) {
-            const targetChannel = playlistData.find(c => c.id === channelId);
-            if (!targetChannel) return;
-
-            activeChannelId = channelId;
-
-            // Handle Active UI State highlights via Border and Glow Effect
-            playlistData.forEach(c => {
-                const element = document.getElementById(`btn-${c.id}`);
-                if (element) {
-                    element.classList.remove('border-green-500', 'shadow-lg', 'shadow-green-950/20', 'bg-[#111936]');
-                    element.classList.add('border-gray-800/60', 'bg-[#0c1226]/60');
-                }
-            });
-
-            const activeRow = document.getElementById(`btn-${channelId}`);
-            if (activeRow) {
-                activeRow.classList.remove('border-gray-800/60', 'bg-[#0c1226]/60');
-                activeRow.classList.add('border-green-500', 'shadow-lg', 'shadow-green-950/20', 'bg-[#111936]');
-            }
-
-            // Update Metadata Texts
-            document.getElementById('activeChannelName').innerText = targetChannel.name;
-
-            // Change Iframe Source
-            document.getElementById('ott-iframe').src = targetChannel.src;
-
-            // Randomize and trigger Live Viewer Counter animation simulation
-            updateViewerCounter();
-        }
-
-        // Hot Reload Button Logic (Refreshes the current active iframe)
-        function hotReloadIframe() {
-            const iframe = document.getElementById('ott-iframe');
-            if (iframe && iframe.src) {
-                const currentSrc = iframe.src;
-                iframe.src = ""; // Clear source
-                setTimeout(() => {
-                    iframe.src = currentSrc; // Reset source to re-trigger load
-                }, 100);
-                console.log("Iframe Hot Reloaded");
-            }
-        }
-
-        // OTT Feature: Theater Mode Handler Logic
-        function toggleTheaterMode() {
-            const playerContainer = document.getElementById('playerContainer');
-            const sidebarContainer = document.getElementById('sidebarContainer');
-            const theaterBtn = document.getElementById('theaterBtn');
-
-            isTheaterMode = !isTheaterMode;
-
-            if (isTheaterMode) {
-                sidebarContainer.classList.add('hidden', 'lg:hidden');
-                playerContainer.classList.remove('lg:col-span-2');
-                playerContainer.classList.add('lg:col-span-3');
-                theaterBtn.innerHTML = `<i class="fa-solid fa-compress"></i> Exit Theater`;
-                theaterBtn.classList.replace('bg-gray-800', 'bg-green-600');
-            } else {
-                sidebarContainer.classList.remove('hidden', 'lg:hidden');
-                playerContainer.classList.remove('lg:col-span-3');
-                playerContainer.classList.add('lg:col-span-2');
-                theaterBtn.innerHTML = `<i class="fa-solid fa-expand"></i> Theater Mode`;
-                theaterBtn.classList.replace('bg-green-600', 'bg-gray-800');
-            }
-        }
-
-        // Realtime Simulation Engine for Live Fake Viewer Counter 
-        function updateViewerCounter() {
-            const baseValue = Math.floor(Math.random() * (250 - 10 + 1)) + 10;
-            const decimalValue = Math.floor(Math.random() * 9);
-            document.getElementById('viewerCounter').innerText = `${baseValue}.${decimalValue}K`;
-        }
-
-        // Auto Refresh Viewers Count Every 15 Seconds dynamically
-        setInterval(() => {
-            if(activeChannelId !== "") updateViewerCounter();
-        }, 15000);
     </script>
 </body>
 </html>
