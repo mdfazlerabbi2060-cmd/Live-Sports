@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toffee Plus - Ultimate Control Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.db = db;
+        window.dbRef = ref;
+        window.dbPush = push;
+        window.dbSet = set;
+        window.dbRemove = remove;
+    </script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
+        .fifa-font { font-family: 'Syne', sans-serif; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col antialiased bg-slate-950">
+
+    <div id="loginGate" class="fixed inset-0 bg-slate-950 z-[9999] flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-md bg-slate-900 border border-white/10 p-6 md:p-8 rounded-3xl text-center shadow-2xl">
+            <i class="fa-solid fa-shield-halved text-4xl text-yellow-500 mb-3"></i>
+            <h1 class="fifa-font text-xl font-black text-white uppercase">Cloud Authentication</h1>
+            <input type="password" id="accessKeyInput" placeholder="অ্যাডমিন পাসওয়ার্ড দিন" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500 text-center tracking-widest my-4">
+            <button onclick="verifyAccess()" class="w-full bg-yellow-500 text-black font-extrabold py-3 rounded-xl text-xs uppercase">Login To System</button>
+        </div>
+    </div>
+
+    <header class="bg-slate-900 border-b border-white/5 p-4 md:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-sliders text-emerald-400 text-lg"></i>
+                <h1 class="fifa-font font-black text-white text-base md:text-xl uppercase">Toffee Plus Admin Server</h1>
+            </div>
+            
+            <div class="bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-2xl flex items-center gap-2.5">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <span class="text-xs font-bold text-gray-300 uppercase tracking-wider">Live Users Counter:</span>
+                <span id="liveUserCounter" class="text-sm font-black text-red-400">0</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 shadow-xl">
+                <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-folder-plus mr-1"></i> ১. ক্যাটাগরি তৈরি</h2>
+                <input type="text" id="newCatName" placeholder="উদা: Live Matches" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white mb-2 focus:outline-none focus:border-emerald-500">
+                <button onclick="addCategory()" class="w-full bg-emerald-500 text-black font-bold py-2 rounded-xl text-xs uppercase">Create Category</button>
+            </div>
+
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 shadow-xl">
+                <h2 class="text-xs font-bold text-yellow-500 uppercase tracking-widest mb-4"><i class="fa-solid fa-tv mr-1"></i> ২. নতুন লাইভ চ্যানেল যোগ করুন</h2>
+                <div class="space-y-2.5 text-xs">
+                    <select id="channelCatSelect" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:border-yellow-500 text-gray-300"></select>
+                    <input type="text" id="channelName" placeholder="চ্যানেলের নাম" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:border-yellow-500 text-white">
+                    <input type="url" id="channelLogo" placeholder="লোগো ইউআরএল (Logo URL)" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:border-yellow-500 text-white">
+                    <input type="url" id="channelUrl" placeholder="স্ট্রিমিং বা এমবেড লিংক" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:outline-none focus:border-yellow-500 text-white">
+                    <button onclick="addChannel()" class="w-full bg-yellow-500 text-black font-extrabold py-2 rounded-xl uppercase">Publish Channel Live</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 shadow-xl">
+                <h2 class="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-rectangle-ad mr-1"></i> ৩. স্মার্টলিংক অ্যাড আপডেট</h2>
+                <input type="url" id="adUrlInput" placeholder="অ্যাড ডাইরেক্ট লিংক" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-white mb-2">
+                <div class="flex items-center gap-2 mb-3">
+                    <input type="checkbox" id="adStatusInput" class="w-4 h-4 cursor-pointer">
+                    <label for="adStatusInput" class="text-xs text-gray-300">বিজ্ঞাপন অন (On) রাখুন</label>
+                </div>
+                <button onclick="updateAdSettings()" class="w-full bg-cyan-500 text-black font-extrabold py-2 rounded-xl text-xs uppercase">Save Ad Config</button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 grid grid-cols-1 md:grid-cols-2 gap-5">
+                
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-purple-400 uppercase tracking-wider"><i class="fa-solid fa-bullhorn mr-1"></i> ৪. স্ক্রোলিং নোটিশ ব্যানার</h3>
+                    <textarea id="noticeTextInput" rows="2" placeholder="উদা: আজ রাত ১ টায় আর্জেন্টিনা বনাম ব্রাজিল হাই-ভোল্টেজ ম্যাচ সরাসরি সম্প্রচার করা হবে।" class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs focus:outline-none focus:border-purple-500 text-white"></textarea>
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs text-gray-400 flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="noticeStatusInput" class="w-3.5 h-3.5"> নোটিশ চালু রাখুন
+                        </label>
+                        <button onclick="updateNotice()" class="bg-purple-500 hover:bg-purple-600 text-black text-[11px] font-bold px-4 py-1.5 rounded-lg transition-all">Save Notice</button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="text-xs font-bold text-pink-400 uppercase tracking-wider"><i class="fa-solid fa-circle-exclamation mr-1"></i> ৫. মেইন পেজ অ্যালার্ট পপ-আপ</h3>
+                    <textarea id="popupTextInput" rows="2" placeholder="উদা: সার্ভার আপডেট চলছে! খেলা দেখতে সমস্যা হলে পেজটি রিফ্রেশ দিন।" class="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-xs focus:outline-none focus:border-pink-500 text-white"></textarea>
+                    <div class="flex items-center justify-between">
+                        <label class="text-xs text-gray-400 flex items-center gap-1.5 cursor-pointer">
+                            <input type="checkbox" id="popupStatusInput" class="w-3.5 h-3.5"> পপ-আপ চালু রাখুন
+                        </label>
+                        <button onclick="updatePopup()" class="bg-pink-500 hover:bg-pink-600 text-black text-[11px] font-bold px-4 py-1.5 rounded-lg transition-all">Save Pop-up</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 min-h-[300px]">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-white/5 pb-2"><i class="fa-solid fa-database mr-1"></i> লাইভ ডাটাবেজ কন্টেন্ট লিস্ট ও ডিলিট অপশন</h2>
+                <div id="liveAdminList" class="space-y-4"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        let cats = {};
+        let chs = {};
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if(!window.db) return;
+
+                // ১. ইউজার কাউন্টার রিড করা
+                onValue(window.dbRef(window.db, "liveUsers"), (snap) => {
+                    const onlineCount = snap.size || Object.keys(snap.val() || {}).length;
+                    document.getElementById('liveUserCounter').innerText = onlineCount;
+                });
+
+                // ২. ক্যাটাগরি ডাটা রিড করা
+                onValue(window.dbRef(window.db, "categories"), (snap) => {
+                    cats = snap.val() || {};
+                    updateSelectors();
+                    renderManagerList();
+                });
+
+                // ৩. চ্যানেল ডাটা রিড করা
+                onValue(window.dbRef(window.db, "channels"), (snap) => {
+                    chs = snap.val() || {};
+                    renderManagerList();
+                });
+
+                // ৪. অ্যাড কনফিগারেশন রিড করা
+                onValue(window.dbRef(window.db, "adConfig"), (snap) => {
+                    const data = snap.val();
+                    if(data) {
+                        document.getElementById('adUrlInput').value = data.url || "";
+                        document.getElementById('adStatusInput').checked = data.status || false;
+                    }
+                });
+
+                // ৫. নোটিশ ডাটা রিড করা
+                onValue(window.dbRef(window.db, "noticeConfig"), (snap) => {
+                    const data = snap.val();
+                    if(data) {
+                        document.getElementById('noticeTextInput').value = data.text || "";
+                        document.getElementById('noticeStatusInput').checked = data.status || false;
+                    }
+                });
+
+                // ৬. পপ-আপ ডাটা রিড করা
+                onValue(window.dbRef(window.db, "popupConfig"), (snap) => {
+                    const data = snap.val();
+                    if(data) {
+                        document.getElementById('popupTextInput').value = data.text || "";
+                        document.getElementById('popupStatusInput').checked = data.status || false;
+                    }
+                });
+            }, 1000);
+        });
+
+        function updateSelectors() {
+            const select = document.getElementById('channelCatSelect');
+            let html = "";
+            Object.keys(cats).forEach(k => { html += `<option value="${k}">${cats[k].name}</option>`; });
+            select.innerHTML = html;
+        }
+
+        function renderManagerList() {
+            const listContainer = document.getElementById('liveAdminList');
+            listContainer.innerHTML = "";
+            if(Object.keys(cats).length === 0) {
+                listContainer.innerHTML = `<div class="text-xs text-gray-600 italic">No cloud nodes active.</div>`;
+                return;
+            }
+            Object.keys(cats).forEach(catKey => {
+                listContainer.innerHTML += `
+                    <div class="border border-white/5 bg-black/20 p-3 rounded-xl space-y-2">
+                        <div class="flex items-center justify-between border-b border-white/5 pb-1">
+                            <span class="text-xs font-bold text-emerald-400 uppercase">${cats[catKey].name}</span>
+                            <button onclick="deleteNode('categories/${catKey}')" class="text-[9px] text-red-400 border border-red-500/10 px-2 py-0.5 rounded">Delete</button>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="box-${catKey}"></div>
+                    </div>
+                `;
+            });
+            Object.keys(chs).forEach(chKey => {
+                let ch = chs[chKey];
+                const catBox = document.getElementById(`box-${ch.categoryId}`);
+                if(catBox) {
+                    catBox.innerHTML += `
+                        <div class="flex items-center justify-between bg-white/5 p-2 rounded-lg border border-white/5 text-xs">
+                            <span class="truncate max-w-[70%] text-gray-300">${ch.name}</span>
+                            <button onclick="deleteNode('channels/${chKey}')" class="text-red-400 text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    `;
+                }
+            });
+        }
+        window.renderManagerList = renderManagerList;
+    </script>
+
+    <script>
+        function verifyAccess() {
+            if(document.getElementById('accessKeyInput').value === "2008") {
+                document.getElementById('loginGate').style.display = 'none';
+            } else { alert("ভুল পাসওয়ার্ড!"); }
+        }
+
+        function addCategory() {
+            const name = document.getElementById('newCatName').value;
+            if(!name.trim()) return;
+            window.dbSet(window.dbPush(window.dbRef(window.db, "categories")), { name: name }).then(() => {
+                document.getElementById('newCatName').value = "";
+            });
+        }
+
+        function addChannel() {
+            const catId = document.getElementById('channelCatSelect').value;
+            const name = document.getElementById('channelName').value;
+            const logo = document.getElementById('channelLogo').value;
+            const url = document.getElementById('channelUrl').value;
+            if(!catId || !name.trim() || !url.trim()) return alert("সব ফর্ম ফিল আপ করুন");
+            window.dbSet(window.dbPush(window.dbRef(window.db, "channels")), { categoryId: catId, name: name, logo: logo, url: url }).then(() => {
+                document.getElementById('channelName').value = ""; document.getElementById('channelLogo').value = ""; document.getElementById('channelUrl').value = "";
+            });
+        }
+
+        function updateAdSettings() {
+            window.dbSet(window.dbRef(window.db, "adConfig"), { url: document.getElementById('adUrlInput').value, status: document.getElementById('adStatusInput').checked }).then(() => alert("Ad updated!"));
+        }
+
+        // 📢 নোটিশ পুশ ফাংশন
+        function updateNotice() {
+            window.dbSet(window.dbRef(window.db, "noticeConfig"), { text: document.getElementById('noticeTextInput').value, status: document.getElementById('noticeStatusInput').checked }).then(() => alert("Notice Panel Live!"));
+        }
+
+        // 📢 পপ-আপ পুশ ফাংশন
+        function updatePopup() {
+            window.dbSet(window.dbRef(window.db, "popupConfig"), { text: document.getElementById('popupTextInput').value, status: document.getElementById('popupStatusInput').checked }).then(() => alert("Pop-up Dynamic Live!"));
+        }
+
+        function deleteNode(path) {
+            if(confirm("Are you sure?")) window.dbRemove(window.dbRef(window.db, path));
+        }
+    </script>     <!-- PANEL CORE CONTROLLER SCRIPT -->
+    <script>
+        // 🔒 পেজ লোড হওয়া মাত্রই চেক করবে আগে লগইন করা আছে কিনা
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('adminAccessKey');
+            if (savedKey === "1234") {
+                // যদি আগে থেকেই সঠিক পাসওয়ার্ড সেভ থাকে, তবে লগইন ওয়াল সরিয়ে দেবে
+                document.getElementById('loginGate').style.display = 'none';
+                injectLogoutButton(); // নেভিগেশনে লগআউট বাটন যোগ করবে
+            }
+        });
+
+        // পাসওয়ার্ড ভেরিফাই করার ফাংশন
+        function verifyAccess() {
+            const code = document.getElementById('accessKeyInput').value;
+            if(code === "1234") { 
+                // পাসওয়ার্ড সঠিক হলে লোকাল স্টোরেজে সেভ করবে
+                localStorage.setItem('adminAccessKey', "1234");
+                document.getElementById('loginGate').style.display = 'none';
+                injectLogoutButton();
+            } else {
+                alert("ভুল কোড! আপনার অ্যাক্সেস প্রত্যাখান করা হলো।");
+            }
+        }
+
+        // এন্টার চাপ দিলেও যাতে লগইন হয়
+        document.getElementById('accessKeyInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyAccess();
+        });
+
+        // 🚪 লগআউট করার ফাংশন (যাতে প্রয়োজনে আবার লক করা যায়)
+        function logoutAdmin() {
+            if(confirm("আপনি কি অ্যাডমিন প্যানেল থেকে লগআউট করতে চান?")) {
+                localStorage.removeItem('adminAccessKey'); // স্টোরেজ থেকে ডিলিট করবে
+                location.reload(); // পেজ রিফ্রেশ করে আবার লক করে দেবে
+            }
+        }
+
+        // হেডার বা নেভিগেশন বারে একটি সুন্দর লগআউট বাটন যুক্ত করার লজিক
+        function injectLogoutButton() {
+            const headerContainer = document.querySelector('header .max-w-7xl');
+            if (headerContainer && !document.getElementById('logoutBtn')) {
+                const logoutBtn = document.createElement('button');
+                logoutBtn.id = 'logoutBtn';
+                logoutBtn.className = 'bg-red-500/10 hover:bg-red-600 border border-red-500/20 text-red-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all ml-3 uppercase tracking-wider';
+                logoutBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Logout';
+                logoutBtn.onclick = logoutAdmin;
+                
+                // রিফ্রেশ বাটনের পাশে বা ডানদিকে যুক্ত করবে
+                headerContainer.appendChild(logoutBtn);
+            }
+        }
+
+        // ---- আগের অন্যান্য ফাংশনগুলো (যা অপরিবর্তিত থাকবে) ----
+        function addCategory() {
+            const name = document.getElementById('newCatName').value;
+            if(!name.trim()) return;
+            window.dbSet(window.dbPush(window.dbRef(window.db, "categories")), { name: name }).then(() => {
+                document.getElementById('newCatName').value = "";
+            });
+        }
+
+        function addChannel() {
+            const catId = document.getElementById('channelCatSelect').value;
+            const name = document.getElementById('channelName').value;
+            const logo = document.getElementById('channelLogo').value;
+            const url = document.getElementById('channelUrl').value;
+            if(!catId || !name.trim() || !url.trim()) return alert("সব ফর্ম ফিল আপ করুন");
+            window.dbSet(window.dbPush(window.dbRef(window.db, "channels")), { categoryId: catId, name: name, logo: logo, url: url }).then(() => {
+                document.getElementById('channelName').value = ""; document.getElementById('channelLogo').value = ""; document.getElementById('channelUrl').value = "";
+            });
+        }
+
+        function updateAdSettings() {
+            window.dbSet(window.dbRef(window.db, "adConfig"), { url: document.getElementById('adUrlInput').value, status: document.getElementById('adStatusInput').checked }).then(() => alert("Ad updated!"));
+        }
+
+        function updateNotice() {
+            window.dbSet(window.dbRef(window.db, "noticeConfig"), { text: document.getElementById('noticeTextInput').value, status: document.getElementById('noticeStatusInput').checked }).then(() => alert("Notice Panel Live!"));
+        }
+
+        function updatePopup() {
+            window.dbSet(window.dbRef(window.db, "popupConfig"), { text: document.getElementById('popupTextInput').value, status: document.getElementById('popupStatusInput').checked }).then(() => alert("Pop-up Dynamic Live!"));
+        }
+
+        function deleteNode(path) {
+            if(confirm("Are you sure?")) window.dbRemove(window.dbRef(window.db, path));
+        }
+    </script>
+</body>
+</html>
