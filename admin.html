@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToffeePlus - Advanced Admin Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+        }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen antialiased">
+
+    <nav class="bg-slate-900/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 px-4 py-4 md:px-8">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="text-xl font-extrabold text-white tracking-tight">
+                    TOFFEE<span class="text-emerald-400">PLUS</span> <span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded ml-1 border border-red-500/30">ADMIN</span>
+                </span>
+            </div>
+            <div class="text-xs text-gray-400 font-medium">Core Engine v2.5 (2026)</div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl w-full mx-auto p-4 md:p-8 space-y-8">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gradient-to-r from-slate-900 to-slate-950 border border-emerald-500/30 p-6 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.1)] flex items-center justify-between relative overflow-hidden col-span-1 md:col-span-3">
+                <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl animate-pulse"></div>
+                <div class="z-10">
+                    <h3 class="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Active Live Users Right Now</h3>
+                    <div class="flex items-center gap-3">
+                        <span id="liveUserCountDisplay" class="text-4xl md:text-6xl font-black text-white">0</span>
+                        <span class="flex h-4 w-4 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="text-5xl text-emerald-500/20 z-10 hidden sm:block">
+                    <i class="fa-solid fa-users-viewfinder animate-pulse"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-slate-900 border border-white/5 p-5 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-purple-400 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-bullhorn"></i> Main Page Notice</h3>
+                <textarea id="mainNoticeText" class="w-full h-20 bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-purple-500 outline-none resize-none" placeholder="Enter marquee text..."></textarea>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center text-xs text-gray-400 cursor-pointer"><input type="checkbox" id="mainNoticeStatus" class="mr-2 rounded accent-purple-500"> Active Notice</label>
+                    <button onclick="window.saveMainNotice()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors">Update</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-white/5 p-5 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-desktop"></i> Player Ticker Notice</h3>
+                <textarea id="playerNoticeText" class="w-full h-20 bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-red-500 outline-none resize-none" placeholder="ভিডিও আটকে গেলে চ্যানেল পরিবর্তন করুন..."></textarea>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center text-xs text-gray-400 cursor-pointer"><input type="checkbox" id="playerNoticeStatus" class="mr-2 rounded accent-red-500"> Active Ticker</label>
+                    <button onclick="window.savePlayerNotice()" class="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors">Update</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-white/5 p-5 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-bell"></i> Popup Modal Alert</h3>
+                <textarea id="popupNoticeText" class="w-full h-20 bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-pink-500 outline-none resize-none" placeholder="Enter popup notification text..."></textarea>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center text-xs text-gray-400 cursor-pointer"><input type="checkbox" id="popupNoticeStatus" class="mr-2 rounded accent-pink-500"> Active Popup</label>
+                    <button onclick="window.savePopupNotice()" class="bg-pink-600 hover:bg-pink-700 text-black font-bold px-4 py-2 rounded-xl text-xs transition-colors">Update</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-900 border border-white/5 p-5 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-yellow-500 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-rectangle-ad"></i> Click-to-Play Ad Redirector</h3>
+                <input type="text" id="adUrlInput" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-yellow-500 outline-none" placeholder="https://your-advertisement-link.com">
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center text-xs text-gray-400 cursor-pointer"><input type="checkbox" id="adStatus" class="mr-2 rounded accent-yellow-500"> Enable Force Ad Window</label>
+                    <button onclick="window.saveAdConfig()" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-4 py-2 rounded-xl text-xs transition-colors">Save Ad Settings</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-white/5 p-5 rounded-2xl space-y-4">
+                <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-folder-plus"></i> Create Streaming Category</h3>
+                <div class="flex gap-2">
+                    <input type="text" id="categoryNameInput" class="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-emerald-500 outline-none" placeholder="e.g., Football Live, Server Links">
+                    <button onclick="window.createCategory()" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold px-4 rounded-xl text-xs transition-colors whitespace-nowrap"><i class="fa-solid fa-plus"></i> Add Category</button>
+                </div>
+                <div id="categoryBadgeList" class="flex flex-wrap gap-2 pt-2 max-h-20 overflow-y-auto custom-scroll"></div>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+            <div class="px-6 py-4 bg-slate-950 border-b border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-circle-dot text-red-500 animate-pulse"></i> Channel Deployment Console</h3>
+                <span id="formModeBadge" class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider">Create Mode</span>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1 bg-black/30 border border-white/5 p-4 rounded-xl space-y-4 h-fit">
+                    <h4 id="formTitle" class="text-xs font-bold uppercase text-gray-400 tracking-wider">Add New Channel</h4>
+                    <input type="hidden" id="editChannelKey" value="">
+                    
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-500">Select Cluster / Category</label>
+                        <select id="channelCategorySelect" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-emerald-500"></select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-500">Channel / Server Name</label>
+                        <input type="text" id="channelName" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-emerald-500" placeholder="e.g., Server 1 (HD)">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-500">Stream Source URL (Iframe Embed Link)</label>
+                        <input type="text" id="channelUrl" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-emerald-500" placeholder="https://example.com/embed/stream">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold uppercase text-gray-500">Logo Image URL (Optional)</label>
+                        <input type="text" id="channelLogo" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-emerald-500" placeholder="https://image-link.png">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="window.resetChannelForm()" id="cancelEditBtn" class="hidden flex-1 bg-slate-800 hover:bg-slate-700 text-gray-400 font-bold py-3 rounded-lg text-xs uppercase tracking-wider transition-colors">Cancel</button>
+                        <button onclick="window.saveChannel()" id="submitChannelBtn" class="flex-[2] bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold py-3 rounded-lg text-xs uppercase tracking-wider transition-colors"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> Publish Live Stream</button>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                    <h4 class="text-xs font-bold uppercase text-gray-400 tracking-wider">Currently Deployed Streams</h4>
+                    <div class="border border-white/5 rounded-xl overflow-hidden bg-black/20 overflow-x-auto custom-scroll">
+                        <table class="w-full text-left border-collapse min-w-[540px]">
+                            <thead>
+                                <tr class="bg-slate-950 text-[10px] uppercase font-bold text-gray-400 tracking-wider border-b border-white/5">
+                                    <th class="p-3">Logo</th>
+                                    <th class="p-3">Channel Name</th>
+                                    <th class="p-3">Category</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminChannelsTableBody" class="text-xs text-gray-300 divide-y divide-white/5">
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-gray-500 italic">Syncing streams from network database...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let dbCategories = {};
+        let dbChannels = {};
+
+        // 🟢 ১. রিয়েলটাইম লাইভ ইউজার ট্র্যাকিং কাউন্টার
+        const liveUsersRef = ref(db, "liveUsers");
+        onValue(liveUsersRef, (snapshot) => {
+            const totalUsers = snapshot.exists() ? snapshot.size : 0;
+            const countDisplay = document.getElementById('liveUserCountDisplay');
+            if(countDisplay) countDisplay.innerText = totalUsers;
+        });
+
+        // 🟢 ২. মেইন পেজ নোটিশ কন্ট্রোল
+        window.saveMainNotice = function() {
+            const text = document.getElementById('mainNoticeText').value;
+            const status = document.getElementById('mainNoticeStatus').checked;
+            set(ref(db, "noticeConfig"), { text, status }).then(() => alert("Main Notice Saved!"));
+        }
+
+        // 🟢 ৩. প্লেয়ার স্ক্রিন নোটিশ কন্ট্রোল
+        window.savePlayerNotice = function() {
+            const text = document.getElementById('playerNoticeText').value;
+            const status = document.getElementById('playerNoticeStatus').checked;
+            set(ref(db, "playerNoticeConfig"), { text, status }).then(() => alert("Player Ticker Updated!"));
+        }
+
+        // 🟢 ৪. অ্যালার্ট পপ-আপ মোডাল কন্ট্রোল
+        window.savePopupNotice = function() {
+            const text = document.getElementById('popupNoticeText').value;
+            const status = document.getElementById('popupNoticeStatus').checked;
+            set(ref(db, "popupConfig"), { text, status }).then(() => alert("Popup Notification Pushed!"));
+        }
+
+        // 🟢 ৫. অ্যাডভার্টাইজমেন্ট লিংক কন্ট্রোল
+        window.saveAdConfig = function() {
+            const url = document.getElementById('adUrlInput').value;
+            const status = document.getElementById('adStatus').checked;
+            set(ref(db, "adConfig"), { url, status }).then(() => alert("Ad Configurations Applied!"));
+        }
+
+        // 🟢 ৬. ক্যাটাগরি তৈরি করার কন্ট্রোল
+        window.createCategory = function() {
+            const nameInput = document.getElementById('categoryNameInput');
+            const catName = nameInput.value.trim();
+            if(!catName) return alert("Category name cannot be blank!");
+
+            const newCatRef = push(ref(db, "categories"));
+            set(newCatRef, { name: catName }).then(() => { nameInput.value = ""; });
+        }
+
+        window.deleteCategory = function(catKey) {
+            if(confirm("Are you sure you want to drop this category?")) {
+                remove(ref(db, `categories/${catKey}`));
+            }
+        }
+
+        // 🟢 ৭. নতুন চ্যানেল যোগ এবং বিদ্যমান চ্যানেল এডিট (Update) করার নতুন লজিক
+        window.saveChannel = function() {
+            const catId = document.getElementById('channelCategorySelect').value;
+            const name = document.getElementById('channelName').value.trim();
+            const url = document.getElementById('channelUrl').value.trim();
+            const logo = document.getElementById('channelLogo').value.trim();
+            const editKey = document.getElementById('editChannelKey').value;
+
+            if(!catId || !name || !url) {
+                return alert("Please fill up Category, Channel Name, and Streaming URL!");
+            }
+
+            const channelData = { categoryId: catId, name, url, logo };
+
+            if(editKey && editKey !== "") {
+                // এডিট মোড চালু থাকলে ফায়ারবেসের নির্দিষ্ট আইডিতে ডেটা ওভাররাইট (Update) হবে
+                set(ref(db, `channels/${editKey}`), channelData).then(() => {
+                    alert("Channel Configurations Updated!");
+                    window.resetChannelForm();
+                });
+            } else {
+                // নরমাল মোডে নতুন চ্যানেল পুশ হবে
+                const newChannelRef = push(ref(db, "channels"));
+                set(newChannelRef, channelData).then(() => {
+                    alert("Live Stream Server Deployed!");
+                    window.resetChannelForm();
+                });
+            }
+        }
+
+        // ✨ এডিট ট্রিগার ফাংশন: টেবিল থেকে ডেটা ফর্মে পাঠাবে
+        window.editChannel = function(chKey) {
+            const channel = dbChannels[chKey];
+            if(!channel) return;
+
+            // ফর্মের ফিল্ডগুলোতে মান বসানো হচ্ছে
+            document.getElementById('editChannelKey').value = chKey;
+            document.getElementById('channelCategorySelect').value = channel.categoryId;
+            document.getElementById('channelName').value = channel.name;
+            document.getElementById('channelUrl').value = channel.url;
+            document.getElementById('channelLogo').value = channel.logo || "";
+
+            // UI ইন্টারফেস পরিবর্তন
+            document.getElementById('formTitle').innerText = "Edit Stream Node";
+            document.getElementById('formModeBadge').innerText = "Edit Mode";
+            document.getElementById('formModeBadge').className = "text-[10px] bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider";
+            document.getElementById('submitChannelBtn').innerHTML = `<i class="fa-solid fa-pen-to-square mr-1"></i> Update Stream Server`;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            
+            // স্ক্রিন ফোকাস ফর্মে নিয়ে যাওয়া (মোবাইলের জন্য সুবিধা)
+            document.getElementById('formTitle').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ফর্ম রিসেট করার ফাংশন
+        window.resetChannelForm = function() {
+            document.getElementById('editChannelKey').value = "";
+            document.getElementById('channelCategorySelect').value = "";
+            document.getElementById('channelName').value = "";
+            document.getElementById('channelUrl').value = "";
+            document.getElementById('channelLogo').value = "";
+
+            document.getElementById('formTitle').innerText = "Add New Channel";
+            document.getElementById('formModeBadge').innerText = "Create Mode";
+            document.getElementById('formModeBadge').className = "text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider";
+            document.getElementById('submitChannelBtn').innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-1"></i> Publish Live Stream`;
+            document.getElementById('cancelEditBtn').add('hidden');
+        }
+
+        window.deleteChannel = function(chKey) {
+            if(confirm("Decommission this stream server?")) {
+                remove(ref(db, `channels/${chKey}`));
+                if(document.getElementById('editChannelKey').value === chKey) {
+                    window.resetChannelForm();
+                }
+            }
+        }
+
+        // 🟢 ৮. ডেটাবেজ লিসেনার সিঙ্ক্রোনাইজেশন
+        onValue(ref(db, "noticeConfig"), (snap) => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('mainNoticeText').value = data.text || "";
+                document.getElementById('mainNoticeStatus').checked = data.status || false;
+            }
+        });
+
+        onValue(ref(db, "playerNoticeConfig"), (snap) => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('playerNoticeText').value = data.text || "";
+                document.getElementById('playerNoticeStatus').checked = data.status || false;
+            }
+        });
+
+        onValue(ref(db, "popupConfig"), (snap) => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('popupNoticeText').value = data.text || "";
+                document.getElementById('popupNoticeStatus').checked = data.status || false;
+            }
+        });
+
+        onValue(ref(db, "adConfig"), (snap) => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('adUrlInput').value = data.url || "";
+                document.getElementById('adStatus').checked = data.status || false;
+            }
+        });
+
+        onValue(ref(db, "categories"), (snapshot) => {
+            dbCategories = snapshot.val() || {};
+            const badgeContainer = document.getElementById('categoryBadgeList');
+            const selectDropdown = document.getElementById('channelCategorySelect');
+            let badgeHtml = "";
+            let selectHtml = `<option value="" disabled selected>Choose Cluster...</option>`;
+
+            Object.keys(dbCategories).forEach(key => {
+                badgeHtml += `
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 text-emerald-400 font-semibold border border-white/5 rounded-full text-xs">
+                        ${dbCategories[key].name}
+                        <button onclick="window.deleteCategory('${key}')" class="text-gray-500 hover:text-red-400 font-bold ml-1 text-[10px]"><i class="fa-solid fa-xmark"></i></button>
+                    </span>`;
+                selectHtml += `<option value="${key}">${dbCategories[key].name}</option>`;
+            });
+
+            badgeContainer.innerHTML = badgeHtml || `<span class="text-xs text-gray-600 italic">No clusters deployed yet.</span>`;
+            selectDropdown.innerHTML = selectHtml;
+            renderAdminChannelsTable();
+        });
+
+        onValue(ref(db, "channels"), (snapshot) => {
+            dbChannels = snapshot.val() || {};
+            renderAdminChannelsTable();
+        });
+
+        function renderAdminChannelsTable() {
+            const tbody = document.getElementById('adminChannelsTableBody');
+            if(!tbody) return;
+            let html = "";
+
+            if (Object.keys(dbChannels).length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-600 italic">No streaming nodes active currently.</td></tr>`;
+                return;
+            }
+
+            Object.keys(dbChannels).forEach(key => {
+                const channel = dbChannels[key];
+                const categoryName = dbCategories[channel.categoryId] ? dbCategories[channel.categoryId].name : "Unknown/Standalone";
+                
+                html += `
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                        <td class="p-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-900 p-1 border border-white/10 flex items-center justify-center">
+                                <img src="${channel.logo || 'https://placehold.co/50x50/090d16/10b981?text=TV'}" class="w-full h-full object-contain rounded-full">
+                            </div>
+                        </td>
+                        <td class="p-3 font-semibold text-white">
+                            ${channel.name}
+                            <div class="text-[9px] text-gray-500 font-normal truncate max-w-[180px] md:max-w-xs">${channel.url}</div>
+                        </td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[10px] font-bold uppercase">${categoryName}</span>
+                        </td>
+                        <td class="p-3 text-right space-x-1 whitespace-nowrap">
+                            <button onclick="window.editChannel('${key}')" class="bg-yellow-500/10 hover:bg-yellow-500 border border-yellow-500/20 hover:border-transparent text-yellow-500 hover:text-black px-2.5 py-1.5 rounded-lg font-bold transition-all text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                            <button onclick="window.deleteChannel('${key}')" class="bg-red-500/10 hover:bg-red-600 border border-red-500/20 hover:border-transparent text-red-400 hover:text-white px-2.5 py-1.5 rounded-lg font-bold transition-all text-xs"><i class="fa-solid fa-trash-can"></i> Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
