@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA World Cup 2026 - Premium OTT Hub</title>
+    <!-- Tailwind CSS & FontAwesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght=700;800&family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(234, 179, 8, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+        .fifa-font { font-family: 'Syne', sans-serif; }
+        
+        .channel-circle-card {
+            will-change: transform;
+            transform: translateZ(0);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .channel-circle-card:hover {
+            transform: scale(1.08) translateZ(0);
+        }
+        .logo-box {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        .channel-circle-card:hover .logo-box {
+            border-color: rgba(16, 185, 129, 0.6);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), inset 0 1px 1px rgba(255,255,255,0.2);
+        }
+
+        .active-pill {
+            background: linear-gradient(90deg, #10b981, #059669);
+            color: #000 !important;
+            font-weight: 700;
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes ticker {
+            0% { transform: translate3d(100%, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+        .ticker-wrap {
+            overflow: hidden;
+            width: 100%;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+        .ticker-text {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 20px;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            animation-name: ticker;
+            animation-duration: 65s;
+        }
+        .ticker-wrap:hover .ticker-text {
+            animation-play-state: paused;
+        }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col antialiased">
+
+    <div id="globalNoticeBar" class="w-full bg-gradient-to-r from-purple-900 to-indigo-950 border-b border-white/10 py-2 px-4 hidden text-xs font-semibold overflow-hidden">
+        <marquee id="noticeMarqueeText" scrollamount="4" class="text-purple-200"></marquee>
+    </div>
+
+    <div class="w-full bg-gradient-to-r from-emerald-900 via-slate-950 to-yellow-950 border-b border-white/5 py-2 px-4 text-center text-[11px] md:text-xs font-medium tracking-wide flex items-center justify-center gap-2">
+        <span class="bg-[#00ff66] text-black px-1.5 py-0.5 rounded font-black text-[9px] animate-pulse">LIVE</span>
+        <span class="text-white/90">FIFA WORLD CUP 2026™ PREMIUM LIVE STREAMING HUB</span>
+    </div>
+
+    <nav class="sticky top-0 z-50 bg-[#030712]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="location.reload()">
+                <span class="fifa-font text-xl md:text-2xl font-black tracking-tighter text-white">
+                    TOFFEE<span class="text-emerald-400">PLUS</span>
+                </span>
+                <div class="bg-yellow-500 text-black text-[9px] font-black px-1 py-0.5 rounded uppercase tracking-widest">LIVE</div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 font-bold uppercase tracking-wider">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full inline-block mr-1 animate-ping"></span> Online
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-6">
+        <div id="categoryContainer" class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-2">
+            <button onclick="window.filterCategory('all')" id="btn-all" class="active-pill px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all">All Streams</button>
+        </div>
+        <div id="dynamicSections" class="space-y-10">
+            <div class="text-center py-12 text-gray-500 text-sm">
+                <i class="fa-solid fa-spinner animate-spin text-xl text-emerald-400 mb-2"></i><br>Connecting to Live Server...
+            </div>
+        </div>
+    </main>
+
+    <div id="announcementPopupModal" class="fixed inset-0 z-[200] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="w-full max-w-md bg-slate-900 border border-pink-500/30 p-6 rounded-2xl text-center shadow-2xl relative">
+            <div class="w-12 h-12 bg-pink-500/10 text-pink-400 rounded-full flex items-center justify-center mx-auto text-xl mb-3 border border-pink-500/20">
+                <i class="fa-solid fa-bell animate-bounce"></i>
+            </div>
+            <h3 class="fifa-font text-base font-black text-white uppercase tracking-wider mb-2">Notice / অ্যানাউন্समেন্ট</h3>
+            <p id="popupModalContentText" class="text-xs text-gray-300 leading-relaxed mb-5 whitespace-pre-wrap"></p>
+            <button onclick="window.closeNoticePopup()" class="w-full bg-pink-500 hover:bg-pink-600 text-black font-extrabold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-colors">I Understand / ঠিক আছে</button>
+        </div>
+    </div>
+
+    <div id="videoPlayerModal" class="fixed inset-0 z-[100] hidden flex-col bg-slate-950/98 backdrop-blur-xl overflow-y-auto p-3 md:p-6 transition-all duration-300">
+        <div class="w-full max-w-5xl mx-auto flex flex-col shadow-[0_30px_80px_rgba(0,0,0,0.9)] bg-[#090d16] border border-white/10 rounded-[24px] md:rounded-[32px] overflow-hidden mb-6">
+            <div class="flex items-center justify-between px-4 py-3 md:px-6 bg-slate-950/80 border-b border-white/5">
+                <div id="modalTitle" class="text-xs md:text-sm font-bold text-white flex items-center gap-2 truncate max-w-[70%]"></div>
+                <button onclick="window.closePlayer()" class="bg-red-500/10 hover:bg-red-600 border border-red-500/20 text-red-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i> CLOSE
+                </button>
+            </div>
+
+            <div id="playerNoticeArea" class="w-full bg-red-600 border-b border-red-700 h-9 hidden flex items-center text-xs font-bold text-white overflow-hidden relative select-none">
+                <div id="tickerBadge" class="h-full bg-yellow-500 text-black px-3 flex items-center z-20 font-black tracking-wider shadow-[5px_0_10px_rgba(0,0,0,0.3)] text-[10px] md:text-xs flex-shrink-0">
+                    <i class="fa-solid fa-circle text-[8px] mr-1.5 animate-pulse text-red-600"></i> NOTICE
+                </div>
+                <div class="ticker-wrap flex-1 h-full z-10">
+                    <div id="playerNoticeText" class="ticker-text text-white font-semibold text-[11px] md:text-xs flex items-center h-full"></div>
+                </div>
+            </div>
+            
+            <div class="relative w-full aspect-video bg-black" id="playerScreenArea"></div>
+        </div>
+
+        <div class="w-full max-w-5xl mx-auto px-1 space-y-4">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <h3 class="text-xs md:text-sm font-black text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-bolt-lightning mr-1 animate-pulse"></i> Quick Switch Live Channels</h3>
+                <span class="text-[10px] text-gray-500 italic">প্লেয়ার চালু রেখেই চ্যানেল পরিবর্তন করুন</span>
+            </div>
+            <div id="playerCategoryContainer" class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1"></div>
+            <div id="playerLiveChannelsGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 gap-3 py-2"></div>
+        </div>
+    </div>
+
+    <footer class="py-8 bg-[#02050c] border-t border-white/5 text-center text-xs text-gray-600 font-medium tracking-wide mt-12">
+        &copy; 2026 TOFFEE PLUS OTT PLATFORM. ALL RIGHTS RESERVED.
+    </footer>
+    <!-- 🔥 FIREBASE SDK MODULE & LOGIC CORE ENGINE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let localCategories = {};
+        let localChannels = {};
+        let activeAdConfig = { url: "", status: false };
+        let activeFilterId = "all";
+        let activePlayerFilterId = "all";
+
+        const userRef = push(ref(db, "liveUsers"));
+        set(userRef, { active: true });
+        onDisconnect(userRef).remove(); 
+
+        window.filterCategory = function(catId) {
+            activeFilterId = catId;
+            const buttons = document.querySelectorAll('#categoryContainer button');
+            buttons.forEach(btn => btn.classList.remove('active-pill'));
+            
+            const activeBtn = document.getElementById(`btn-${catId}`);
+            if(activeBtn) activeBtn.classList.add('active-pill');
+            
+            renderMainDashboard();
+        }
+
+        window.filterPlayerCategory = function(catId) {
+            activePlayerFilterId = catId;
+            const buttons = document.querySelectorAll('#playerCategoryContainer button');
+            buttons.forEach(btn => btn.classList.remove('active-pill'));
+            
+            const activeBtn = document.getElementById(`pbtn-${catId}`);
+            if(activeBtn) activeBtn.classList.add('active-pill');
+            
+            renderPlayerChannels();
+        }
+
+        window.openPlayer = function(url, channelName) {
+            if(!url || url.trim() === "") {
+                alert("Stream configurations are updating. Please try again!");
+                return;
+            }
+
+            if(activeAdConfig && activeAdConfig.status === true && activeAdConfig.url !== "") {
+                window.open(activeAdConfig.url, '_blank');
+            }
+
+            const playerModal = document.getElementById('videoPlayerModal');
+            const screenArea = document.getElementById('playerScreenArea');
+            const modalTitle = document.getElementById('modalTitle');
+
+            modalTitle.innerHTML = `<span class="w-2 h-2 rounded-full bg-[#00ff66] animate-pulse"></span> STREAMING NOW: ${channelName.toUpperCase()}`;
+            
+            screenArea.innerHTML = `
+                <iframe 
+                    src="${url}" 
+                    width="100%" 
+                    height="100%" 
+                    frameborder="0" 
+                    loading="lazy"
+                    allowfullscreen="true" 
+                    webkitallowfullscreen="true" 
+                    mozallowfullscreen="true"
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture;"
+                    sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation">
+                </iframe>`;
+            
+            playerModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; 
+            
+            window.filterPlayerCategory('all');
+        }
+
+        window.closePlayer = function() {
+            document.getElementById('videoPlayerModal').style.display = 'none';
+            document.getElementById('playerScreenArea').innerHTML = ""; 
+            document.body.style.overflow = 'auto'; 
+        }
+
+        window.closeNoticePopup = function() {
+            const currentText = document.getElementById('popupModalContentText').innerText;
+            sessionStorage.setItem('popupShown', currentText); 
+            document.getElementById('announcementPopupModal').style.display = 'none';
+        }
+
+        function updateCategoryUI() {
+            const container = document.getElementById('categoryContainer');
+            let html = `<button onclick="window.filterCategory('all')" id="btn-all" class="${activeFilterId === 'all' ? 'active-pill' : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5'} px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all">All Streams</button>`;
+            
+            Object.keys(localCategories).forEach(key => {
+                const isActive = activeFilterId === key;
+                html += `<button id="btn-${key}" onclick="window.filterCategory('${key}')" class="${isActive ? 'active-pill' : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5'} px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all ml-2">${localCategories[key].name}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function updatePlayerCategoryUI() {
+            const pContainer = document.getElementById('playerCategoryContainer');
+            if(!pContainer) return;
+            let html = `<button onclick="window.filterPlayerCategory('all')" id="pbtn-all" class="${activePlayerFilterId === 'all' ? 'active-pill' : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'} px-4 py-1.5 rounded-full text-[11px] whitespace-nowrap transition-all">All</button>`;
+            
+            Object.keys(localCategories).forEach(key => {
+                const isActive = activePlayerFilterId === key;
+                html += `<button id="pbtn-${key}" onclick="window.filterPlayerCategory('${key}')" class="${isActive ? 'active-pill' : 'bg-white/5 hover:bg-white/10 text-gray-400 border border-white/5'} px-4 py-1.5 rounded-full text-[11px] whitespace-nowrap transition-all ml-1.5">${localCategories[key].name}</button>`;
+            });
+            pContainer.innerHTML = html;
+        }
+
+        function renderMainDashboard() {
+            const sectionsArea = document.getElementById('dynamicSections');
+            sectionsArea.innerHTML = "";
+
+            if (Object.keys(localCategories).length === 0) {
+                sectionsArea.innerHTML = `<div class="text-center py-12 text-gray-500 text-sm">No operational streams available right now.</div>`;
+                return;
+            }
+
+            Object.keys(localCategories).forEach(catKey => {
+                if(activeFilterId !== "all" && activeFilterId !== catKey) return;
+
+                let category = localCategories[catKey];
+                let channelCardsHtml = "";
+
+                Object.keys(localChannels).forEach(chKey => {
+                    let channel = localChannels[chKey];
+                    if(channel.categoryId === catKey) {
+                        channelCardsHtml += `
+                            <div onclick="window.openPlayer('${channel.url}', '${channel.name}')" class="channel-circle-card flex flex-col items-center text-center cursor-pointer group">
+                                <div class="logo-box w-20 h-20 md:w-24 md:h-24 rounded-full border border-white/10 flex items-center justify-center p-3 overflow-hidden bg-slate-900/50 backdrop-blur-sm">
+                                    <img src="${channel.logo || 'https://placehold.co/150x150/090d16/10b981?text=TV'}" alt="Logo" class="w-full h-full object-contain rounded-full transition-transform duration-300 group-hover:scale-105">
+                                    <div class="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 rounded-full flex items-center justify-center transition-all duration-300">
+                                        <i class="fa-solid fa-play text-emerald-400 text-sm"></i>
+                                    </div>
+                                </div>
+                                <h3 class="mt-2 text-[11px] md:text-xs font-bold text-gray-300 group-hover:text-emerald-400 transition-colors max-w-full truncate px-1">${channel.name}</h3>
+                                <span class="text-[8px] text-emerald-400 font-bold tracking-widest uppercase bg-emerald-500/10 px-1.5 py-0.5 rounded mt-0.5 opacity-80 scale-90">LIVE</span>
+                            </div>
+                        `;
+                    }
+                });
+
+                if(channelCardsHtml === "") {
+                    if(activeFilterId !== "all") {
+                        channelCardsHtml = `<div class="col-span-full text-xs text-gray-600 italic py-4">No channels active under this category.</div>`;
+                    } else { return; }
+                }
+
+                sectionsArea.innerHTML += `
+                    <section class="space-y-4">
+                        <h2 class="fifa-font text-sm md:text-base font-extrabold tracking-tight text-white uppercase flex items-center gap-2">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> ${category.name}
+                        </h2>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 md:gap-6 bg-slate-900/10 p-4 rounded-3xl border border-white/5">
+                            ${channelCardsHtml}
+                        </div>
+                    </section>
+                `;
+            });
+        }
+
+        function renderPlayerChannels() {
+            const grid = document.getElementById('playerLiveChannelsGrid');
+            if(!grid) return;
+            grid.innerHTML = "";
+
+            Object.keys(localChannels).forEach(chKey => {
+                let channel = localChannels[chKey];
+                if(activePlayerFilterId !== "all" && channel.categoryId !== activePlayerFilterId) return;
+
+                grid.innerHTML += `
+                    <div onclick="window.openPlayer('${channel.url}', '${channel.name}')" class="flex flex-col items-center text-center cursor-pointer group bg-black/40 p-2 rounded-xl border border-white/5 hover:border-emerald-500/40 transition-all">
+                        <div class="w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center p-1.5 overflow-hidden">
+                            <img src="${channel.logo || 'https://placehold.co/150x150/090d16/10b981?text=TV'}" class="w-full h-full object-contain rounded-full">
+                        </div>
+                        <span class="text-[10px] text-gray-400 font-semibold truncate max-w-full mt-1 group-hover:text-emerald-400 transition-colors">${channel.name}</span>
+                    </div>
+                `;
+            });
+            
+            if(grid.innerHTML === "") {
+                grid.innerHTML = `<div class="col-span-full text-center text-[11px] text-gray-600 italic py-2">No channels available.</div>`;
+            }
+        }
+
+        onValue(ref(db, "categories"), (snapshot) => {
+            localCategories = snapshot.val() || {};
+            updateCategoryUI();
+            updatePlayerCategoryUI();
+            renderMainDashboard();
+        });
+
+        onValue(ref(db, "channels"), (snapshot) => {
+            localChannels = snapshot.val() || {};
+            renderMainDashboard();
+            renderPlayerChannels();
+        });
+
+        onValue(ref(db, "adConfig"), (snapshot) => {
+            const data = snapshot.val();
+            if(data) activeAdConfig = data;
+        });
+
+        onValue(ref(db, "noticeConfig"), (snap) => {
+            const notice = snap.val();
+            const bar = document.getElementById('globalNoticeBar');
+            const text = document.getElementById('noticeMarqueeText');
+            if(notice && notice.status === true && notice.text.trim() !== "") {
+                text.innerText = "📢 " + notice.text;
+                bar.style.display = 'block';
+            } else { bar.style.display = 'none'; }
+        });
+
+        onValue(ref(db, "playerNoticeConfig"), (snap) => {
+            const pNotice = snap.val();
+            const pBar = document.getElementById('playerNoticeArea');
+            const pText = document.getElementById('playerNoticeText');
+            if(pNotice && pNotice.status === true && pNotice.text.trim() !== "") {
+                pText.innerText = pNotice.text + "          ***          " + pNotice.text;
+                pBar.style.display = 'flex';
+            } else { pBar.style.display = 'none'; }
+        });
+
+        onValue(ref(db, "popupConfig"), (snap) => {
+            const popup = snap.val();
+            const modal = document.getElementById('announcementPopupModal');
+            const modalText = document.getElementById('popupModalContentText');
+            if(popup && popup.status === true && popup.text.trim() !== "" && sessionStorage.getItem('popupShown') !== popup.text) {
+                modalText.innerText = popup.text;
+                modal.style.display = 'flex';
+            }
+        });
+    </script>
+</body>
+</html>
