@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toffee Plus - Secure Cloud Console</title>
+    <!-- Tailwind CSS & FontAwesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Firebase SDK Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // 📌 আপনার ফায়ারবেস কনফিগারেশন
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.db = db;
+        window.dbRef = ref;
+        window.dbPush = push;
+        window.dbSet = set;
+        window.dbRemove = remove;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020617;
+        }
+        .fifa-font { font-family: 'Syne', sans-serif; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col antialiased bg-slate-950">
+
+    <!-- LOGIN WALL SCREEN -->
+    <div id="loginGate" class="fixed inset-0 bg-slate-950 z-[9999] flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-md bg-slate-900 border border-white/10 p-6 md:p-8 rounded-3xl text-center shadow-2xl">
+            <i class="fa-solid fa-shield-halved text-4xl text-yellow-500 mb-3 animate-pulse"></i>
+            <h1 class="fifa-font text-xl font-black text-white uppercase tracking-wide">Cloud Authentication</h1>
+            <p class="text-xs text-gray-400 mt-1 mb-6">Enter database access key to continue</p>
+            
+            <input type="password" id="accessKeyInput" placeholder="অ্যাডমিন পাসওয়ার্ড দিন" class="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500 text-center tracking-widest mb-4">
+            <button onclick="verifyAccess()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold py-3 rounded-xl text-xs transition-all uppercase tracking-wider">Login To System</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTROL CENTER PANEL -->
+    <header class="bg-slate-900 border-b border-white/5 p-4 md:px-8">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-sliders text-emerald-400 text-lg"></i>
+                <h1 class="fifa-font font-black tracking-tight text-white text-base md:text-xl uppercase">Toffee Plus Admin Server</h1>
+            </div>
+            <button onclick="location.reload()" class="bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 text-gray-400 hover:text-white"><i class="fa-solid fa-rotate"></i> Refresh</button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- LEFT CONTROL STRIP: FORMS -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- FORM 1: CATEGORY BUILDER -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 shadow-xl">
+                <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-folder-plus mr-1"></i> ১. নতুন ক্যাটাগরি যোগ করুন</h2>
+                <div class="space-y-3">
+                    <input type="text" id="newCatName" placeholder="উদা: Live Matches, News" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <button onclick="addCategory()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-2.5 rounded-xl text-xs transition-all uppercase tracking-wider">Create Category</button>
+                </div>
+            </div>
+
+            <!-- FORM 2: CHANNEL BUILDER -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 shadow-xl">
+                <h2 class="text-xs font-bold text-yellow-500 uppercase tracking-widest mb-4"><i class="fa-solid fa-tv mr-1"></i> ২. নতুন লাইভ চ্যানেল যোগ করুন</h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase block mb-1">সিলেক্ট ক্যাটাগরি</label>
+                        <select id="channelCatSelect" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-500 text-gray-300"></select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase block mb-1">চ্যানেলের নাম</label>
+                        <input type="text" id="channelName" placeholder="উদা: T-Sports 4K" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-500 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase block mb-1">লোগো ইউআরএল (Logo URL)</label>
+                        <input type="url" id="channelLogo" placeholder="https://..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-500 text-white">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase block mb-1">স্ট্রিমিং বা এমবেড লিংক (Stream URL)</label>
+                        <input type="url" id="channelUrl" placeholder="https://..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-yellow-500 text-white">
+                    </div>
+                    <button onclick="addChannel()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-extrabold py-3 rounded-xl text-xs transition-all uppercase tracking-wider mt-2">Publish Channel Live</button>
+                </div>
+            </div>
+
+            <!-- 🚨 FORM 3: AD MANAGER (নতুন যুক্ত করা হয়েছে) -->
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 shadow-xl border-dashed border-cyan-500/30">
+                <h2 class="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-4"><i class="fa-solid fa-rectangle-ad mr-1"></i> ৩. স্মার্টলিংক অ্যাড আপডেট করুন</h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase block mb-1">অ্যাড নেটওয়ার্কের ডাইরেক্ট লিংক</label>
+                        <input type="url" id="adUrlInput" placeholder="https://adnetwork.com/..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-cyan-500 text-white">
+                    </div>
+                    <div class="flex items-center gap-2 pt-1">
+                        <input type="checkbox" id="adStatusInput" class="w-4 h-4 accent-cyan-500 bg-black border-white/10 rounded cursor-pointer">
+                        <label for="adStatusInput" class="text-xs text-gray-300 font-semibold cursor-pointer">বিজ্ঞাপন অন (On) রাখুন</label>
+                    </div>
+                    <button onclick="updateAdSettings()" class="w-full bg-cyan-500 hover:bg-cyan-600 text-black font-extrabold py-2.5 rounded-xl text-xs transition-all uppercase tracking-wider">Save Ad Config</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT DATA STRIP: LIVE LIST VIEWER -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-slate-900 p-5 rounded-2xl border border-white/5 min-h-[400px]">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-white/5 pb-2"><i class="fa-solid fa-database mr-1"></i> লাইভ ডাটাবেজ কন্টেন্ট লিস্ট ও ডিলিট অপশন</h2>
+                
+                <div id="liveAdminList" class="space-y-6">
+                    <!-- ডাটা লিস্ট এখানে অটো লোড হবে -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODULE MONITOR SYSTEM -->
+    <script type="module">
+        import { onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        let cats = {};
+        let chs = {};
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if(!window.db) return;
+
+                // লোড এক্সিস্টিং ক্যাটাগরি
+                onValue(window.dbRef(window.db, "categories"), (snap) => {
+                    cats = snap.val() || {};
+                    updateSelectors();
+                    renderManagerList();
+                });
+
+                // লোড এক্সিস্টিং চ্যানেল
+                onValue(window.dbRef(window.db, "channels"), (snap) => {
+                    chs = snap.val() || {};
+                    renderManagerList();
+                });
+
+                // 🚨 লোড এক্সিস্টিং অ্যাড কনফিগারেশন (নতুন যুক্ত করা হয়েছে)
+                onValue(window.dbRef(window.db, "adConfig"), (snap) => {
+                    const data = snap.val();
+                    if(data) {
+                        document.getElementById('adUrlInput').value = data.url || "";
+                        document.getElementById('adStatusInput').checked = data.status || false;
+                    }
+                });
+            }, 1000);
+        });
+
+        function updateSelectors() {
+            const select = document.getElementById('channelCatSelect');
+            if(!select) return;
+            let html = "";
+            Object.keys(cats).forEach(k => {
+                html += `<option value="${k}">${cats[k].name}</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function renderManagerList() {
+            const listContainer = document.getElementById('liveAdminList');
+            listContainer.innerHTML = "";
+
+            if(Object.keys(cats).length === 0) {
+                listContainer.innerHTML = `<div class="text-sm text-gray-600 italic">No cloud nodes active. Create a category to start!</div>`;
+                return;
+            }
+
+            Object.keys(cats).forEach(catKey => {
+                let catHtml = `
+                    <div class="border border-white/5 bg-black/20 p-4 rounded-xl space-y-3">
+                        <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                            <span class="text-sm font-bold text-emerald-400 uppercase"><i class="fa-regular fa-folder-open mr-1"></i> ${cats[catKey].name}</span>
+                            <button onclick="deleteNode('categories/${catKey}')" class="text-[10px] text-red-400 hover:bg-red-500/10 px-2 py-1 rounded-md border border-red-500/10 transition-colors"><i class="fa-solid fa-trash"></i> Delete Cat</button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="box-${catKey}"></div>
+                    </div>
+                `;
+                listContainer.innerHTML += catHtml;
+            });
+
+            Object.keys(chs).forEach(chKey => {
+                let ch = chs[chKey];
+                const catBox = document.getElementById(`box-${ch.categoryId}`);
+                if(catBox) {
+                    catBox.innerHTML += `
+                        <div class="flex items-center justify-between bg-white/5 p-2 rounded-lg border border-white/5 text-xs">
+                            <span class="truncate font-medium max-w-[70%] text-gray-300">${ch.name}</span>
+                            <button onclick="deleteNode('channels/${chKey}')" class="text-red-400 hover:text-red-300 p-1"><i class="fa-solid fa-circle-minus"></i> Remove</button>
+                        </div>
+                    `;
+                }
+            });
+        }
+    </script>
+
+    <!-- PANEL CORE CONTROLLER SCRIPT -->
+    <script>
+        function verifyAccess() {
+            const code = document.getElementById('accessKeyInput').value;
+            if(code === "1234") { 
+                document.getElementById('loginGate').style.display = 'none';
+            } else {
+                alert("ভুল কোড! আপনার অ্যাক্সেস প্রত্যাখান করা হলো।");
+            }
+        }
+
+        document.getElementById('accessKeyInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') verifyAccess();
+        });
+
+        function addCategory() {
+            const name = document.getElementById('newCatName').value;
+            if(!name.trim()) return alert("নাম লিখুন!");
+
+            const newRef = window.dbPush(window.dbRef(window.db, "categories"));
+            window.dbSet(newRef, { name: name }).then(() => {
+                document.getElementById('newCatName').value = "";
+            });
+        }
+
+        function addChannel() {
+            const catId = document.getElementById('channelCatSelect').value;
+            const name = document.getElementById('channelName').value;
+            const logo = document.getElementById('channelLogo').value;
+            const url = document.getElementById('channelUrl').value;
+
+            if(!catId || !name.trim() || !url.trim()) return alert("দয়া করে সব কয়টি ফর্ম সঠিকভাবে ডাটা দিন!");
+
+            const newRef = window.dbPush(window.dbRef(window.db, "channels"));
+            window.dbSet(newRef, {
+                categoryId: catId,
+                name: name,
+                logo: logo,
+                url: url
+            }).then(() => {
+                document.getElementById('channelName').value = "";
+                document.getElementById('channelLogo').value = "";
+                document.getElementById('channelUrl').value = "";
+                alert("লাইভ ডাটাবেজে সফলভাবে আপলোড সম্পন্ন!");
+            });
+        }
+
+        // 🚨 অ্যাড সেটিংস আপডেট করার ফাংশন (নতুন যুক্ত করা হয়েছে)
+        function updateAdSettings() {
+            const adUrl = document.getElementById('adUrlInput').value;
+            const adStatus = document.getElementById('adStatusInput').checked;
+
+            window.dbSet(window.dbRef(window.db, "adConfig"), {
+                url: adUrl,
+                status: adStatus
+            }).then(() => {
+                alert("অ্যাড কনফিগারেশন সফলভাবে সেভ হয়েছে!");
+            }).catch(err => {
+                alert("ত্রুটি: " + err.message);
+            });
+        }
+
+        function deleteNode(path) {
+            if(confirm("আপনি কি নিশ্চিতভাবে এটি ডাটাবেজ থেকে মুছে ফেলতে চান?")) {
+                window.dbRemove(window.dbRef(window.db, path)).then(() => {
+                    alert("ডাটা মুছে ফেলা হয়েছে!");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
