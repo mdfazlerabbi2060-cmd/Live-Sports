@@ -281,7 +281,7 @@
         // 🔒 পেজ লোড হওয়া মাত্রই চেক করবে আগে লগইন করা আছে কিনা
         window.addEventListener('DOMContentLoaded', () => {
             const savedKey = localStorage.getItem('adminAccessKey');
-            if (savedKey === "1234") {
+            if (savedKey === "2008") {
                 // যদি আগে থেকেই সঠিক পাসওয়ার্ড সেভ থাকে, তবে লগইন ওয়াল সরিয়ে দেবে
                 document.getElementById('loginGate').style.display = 'none';
                 injectLogoutButton(); // নেভিগেশনে লগআউট বাটন যোগ করবে
