@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA World Cup 2026 - Premium OTT Hub</title>
+    <!-- Tailwind CSS & FontAwesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Firebase SDK Modules -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // 📌 আপনার ফায়ারবেস কনফিগারেশন
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.db = db;
+        window.dbRef = ref;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #030712;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(234, 179, 8, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+        .fifa-font { font-family: 'Syne', sans-serif; }
+        
+        .channel-ring {
+            position: relative;
+            background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+            will-change: transform, box-shadow;
+            transform: translateZ(0);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .channel-ring:hover {
+            transform: scale(1.04) translateZ(0);
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 16px 32px -10px rgba(16, 185, 129, 0.25);
+        }
+        .active-pill {
+            background: linear-gradient(90deg, #10b981, #059669);
+            color: #000 !important;
+            font-weight: 700;
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col antialiased">
+
+    <!-- TOP HERO BANNER -->
+    <div class="w-full bg-gradient-to-r from-emerald-900 via-slate-950 to-yellow-950 border-b border-white/5 py-2 px-4 text-center text-[11px] md:text-xs font-medium tracking-wide flex items-center justify-center gap-2">
+        <span class="bg-[#00ff66] text-black px-1.5 py-0.5 rounded font-black text-[9px] animate-pulse">LIVE</span>
+        <span class="text-white/90">FIFA WORLD CUP 2026™ PREMIUM LIVE STREAMING HUB</span>
+    </div>
+
+    <!-- MAIN APP NAVIGATION BAR -->
+    <nav class="sticky top-0 z-50 bg-[#030712]/80 backdrop-blur-md border-b border-white/5 px-4 md:px-8 py-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer">
+                <span class="fifa-font text-xl md:text-2xl font-black tracking-tighter text-white">
+                    TOFFEE<span class="text-emerald-400">PLUS</span>
+                </span>
+                <div class="bg-yellow-500 text-black text-[9px] font-black px-1 py-0.5 rounded uppercase tracking-widest">LIVE</div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <span class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/20 font-bold uppercase tracking-wider">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full inline-block mr-1 animate-ping"></span> Online
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENT MAIN INTERFACE -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-8">
+        
+        <!-- DYNAMIC FILTER PILLS -->
+        <div id="categoryContainer" class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-2">
+            <button onclick="filterCategory('all')" class="active-pill px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all">All Streams</button>
+        </div>
+
+        <!-- DYNAMIC SECTIONS CONTAINER -->
+        <div id="dynamicSections" class="space-y-12">
+            <div class="text-center py-12 text-gray-500 text-sm">
+                <i class="fa-solid fa-spinner animate-spin text-xl text-emerald-400 mb-2"></i><br>Connecting to Live Server...
+            </div>
+        </div>
+
+    </main>
+
+    <!-- CINEMATIC PLAYER MODAL -->
+    <div id="videoPlayerModal" class="fixed inset-0 z-[100] hidden justify-center items-center p-3 md:p-6 bg-black/95 backdrop-blur-2xl transition-all duration-300">
+        <div class="w-full max-w-5xl bg-[#090d16] border border-white/10 rounded-[24px] md:rounded-[32px] overflow-hidden flex flex-col shadow-[0_30px_70px_rgba(0,0,0,0.8)] relative">
+            <div class="flex items-center justify-between px-4 py-4 md:px-6 bg-slate-950/40 border-b border-white/5">
+                <div id="modalTitle" class="text-xs md:text-sm font-bold text-white flex items-center gap-2 truncate max-w-[70%]"></div>
+                <button onclick="closePlayer()" class="bg-red-500/10 hover:bg-red-600 border border-red-500/20 text-red-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-xmark"></i> CLOSE
+                </button>
+            </div>
+            <div class="relative w-full aspect-video bg-black">
+                <iframe id="modalIframe" src="" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; fullscreen"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="py-8 bg-[#02050c] border-t border-white/5 text-center text-xs text-gray-600 font-medium tracking-wide">
+        &copy; 2026 TOFFEE PLUS OTT PLATFORM. ALL RIGHTS RESERVED.
+    </footer>
+
+    <!-- DYNAMIC CORE ENGINE -->
+    <script type="module">
+        import { onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        let localCategories = {};
+        let localChannels = {};
+        window.activeAdConfig = { url: "", status: false }; // অ্যাড ডাটা রাখার গ্লোবাল ভেরিয়েবল
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if(!window.db) return;
+                
+                onValue(window.dbRef(window.db, "categories"), (snapshot) => {
+                    localCategories = snapshot.val() || {};
+                    updateCategoryUI();
+                });
+
+                onValue(window.dbRef(window.db, "channels"), (snapshot) => {
+                    localChannels = snapshot.val() || {};
+                    renderMainDashboard();
+                });
+
+                // 🚨 ফায়ারবেস থেকে লাইভ অ্যাড কনফিগারেশন রিড করা (নতুন যুক্ত করা হয়েছে)
+                onValue(window.dbRef(window.db, "adConfig"), (snapshot) => {
+                    const data = snapshot.val();
+                    if(data) {
+                        window.activeAdConfig = data;
+                    }
+                });
+            }, 1000);
+        });
+
+        function updateCategoryUI() {
+            const container = document.getElementById('categoryContainer');
+            let html = `<button onclick="filterCategory('all')" id="btn-all" class="active-pill px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all">All Streams</button>`;
+
+            Object.keys(localCategories).forEach(key => {
+                let cat = localCategories[key];
+                html += `<button id="btn-${key}" onclick="filterCategory('${key}')" class="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5 px-5 py-2.5 rounded-full text-xs whitespace-nowrap transition-all ml-2">${cat.name}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderMainDashboard(filterId = "all") {
+            const sectionsArea = document.getElementById('dynamicSections');
+            sectionsArea.innerHTML = "";
+
+            if (Object.keys(localCategories).length === 0) {
+                sectionsArea.innerHTML = `<div class="text-center py-12 text-gray-500 text-sm">No operational streams available right now.</div>`;
+                return;
+            }
+
+            Object.keys(localCategories).forEach(catKey => {
+                if(filterId !== "all" && filterId !== catKey) return;
+
+                let category = localCategories[catKey];
+                let channelCardsHtml = "";
+
+                Object.keys(localChannels).forEach(chKey => {
+                    let channel = localChannels[chKey];
+                    if(channel.categoryId === catKey) {
+                        channelCardsHtml += `
+                            <div onclick="openPlayer('${channel.url}', '${channel.name}')" class="channel-ring border border-white/10 bg-[#090d16] p-3 rounded-2xl cursor-pointer group flex flex-col h-full">
+                                <div class="aspect-video w-full bg-slate-950 rounded-xl flex items-center justify-center p-3 overflow-hidden relative border border-white/5">
+                                    <img src="${channel.logo || 'https://placehold.co/600x400/090d16/10b981?text=No+Logo'}" alt="Logo" class="w-full h-full object-contain filter group-hover:scale-105 transition-transform duration-300">
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
+                                        <div class="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center pl-0.5 text-sm font-black"><i class="fa-solid fa-play"></i></div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 flex-1 flex flex-col justify-between">
+                                    <h3 class="text-xs md:text-sm font-bold text-white group-hover:text-emerald-400 transition-colors truncate">${channel.name}</h3>
+                                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+                                        <span class="text-[9px] font-black text-emerald-400 uppercase bg-emerald-500/10 px-2 py-0.5 rounded">LIVE FEED</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                if(channelCardsHtml === "") {
+                    if(filterId !== "all") {
+                        channelCardsHtml = `<div class="col-span-full text-xs text-gray-600 italic py-4">No channels active under this category.</div>`;
+                    } else {
+                        return;
+                    }
+                }
+
+                sectionsArea.innerHTML += `
+                    <section class="space-y-4">
+                        <div class="space-y-0.5">
+                            <h2 class="fifa-font text-base md:text-xl font-extrabold tracking-tight text-white uppercase flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span> ${category.name}
+                            </h2>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
+                            ${channelCardsHtml}
+                        </div>
+                    </section>
+                `;
+            });
+        }
+        window.renderMainDashboard = renderMainDashboard;
+    </script>
+
+    <!-- INTERFACE LOGIC SCRIPT -->
+    <script>
+        function filterCategory(catId) {
+            const buttons = document.querySelectorAll('#categoryContainer button');
+            buttons.forEach(btn => btn.classList.remove('active-pill'));
+            
+            const activeBtn = document.getElementById(`btn-${catId}`);
+            if(activeBtn) activeBtn.classList.add('active-pill');
+
+            window.renderMainDashboard(catId);
+        }
+
+        function openPlayer(url, channelName) {
+            if(!url || url.trim() === "") {
+                alert("Stream configurations are updating. Please try again!");
+                return;
+            }
+
+            // 🚨 অ্যাডমিন প্যানেল দ্বারা নিয়ন্ত্রিত লাইভ ডাইরেক্ট লিংক অ্যাড ট্রিক
+            if(window.activeAdConfig && window.activeAdConfig.status === true && window.activeAdConfig.url !== "") {
+                window.open(window.activeAdConfig.url, '_blank');
+            }
+
+            const playerModal = document.getElementById('videoPlayerModal');
+            const modalIframe = document.getElementById('modalIframe');
+            const modalTitle = document.getElementById('modalTitle');
+
+            modalTitle.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE: ${channelName.toUpperCase()}`;
+            modalIframe.src = url;
+            playerModal.style.display = 'flex';
+        }
+
+        function closePlayer() {
+            document.getElementById('videoPlayerModal').style.display = 'none';
+            document.getElementById('modalIframe').src = "";
+        }
+    </script>
+
+    <!-- 🛑 যদি অ্যাডস্টেরা থেকে পপ-আন্ডার জাভাস্ক্রিপ্ট কোড পান, তবে সেটি এখানে পেস্ট করতে পারেন -->
+
+</body>
+</html>
