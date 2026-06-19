@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToffeePlus Ultra - Supreme Live OTT Cyber-Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.10.0/video-js.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/video.js/8.10.0/video.min.js"></script>
+
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #020617; }
+        .cyber-header { background: rgba(2, 6, 23, 0.75); backdrop-filter: blur(25px); border-bottom: 1px solid rgba(16, 185, 129, 0.15); }
+        .category-pill { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .category-pill.active { background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #020617; font-weight: 900; border-color: #10b981; box-shadow: 0 8px 30px rgba(16, 185, 129, 0.3); }
+        .station-card { background: linear-gradient(150deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.9) 100%); border: 1px solid rgba(255, 255, 255, 0.03); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .station-card:hover { border-color: rgba(16, 185, 129, 0.35); box-shadow: 0 15px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05); transform: translateY(-3px); }
+        .station-card.playing-node { border-color: #10b981 !important; background: rgba(16, 185, 129, 0.04); box-shadow: 0 0 25px rgba(16, 185, 129, 0.15); }
+        .custom-scrollbar::-webkit-scrollbar { height: 5px; width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(16,185,129,0.3); }
+        
+        /* ⚡ ULTRALIGHT IFRAME COMPONENT RESIZER CONTAINER - CRITICAL FIX */
+        .embedded-sandbox-matrix {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .embedded-sandbox-matrix iframe {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            border: 0 !important;
+            outline: none !important;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-black">
+
+    <div id="appPopupModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl hidden items-center justify-center p-4 z-[9999] animate-fade-in">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/20 rounded-[32px] max-w-lg w-full p-8 text-center space-y-5 shadow-2xl scale-100 transition-all">
+            <div class="w-20 h-20 bg-emerald-500/10 text-emerald-400 rounded-3xl flex items-center justify-center mx-auto text-3xl border border-emerald-500/20 shadow-inner">
+                <i class="fa-solid fa-satellite-dish animate-pulse"></i>
+            </div>
+            <h3 class="text-lg font-black text-white tracking-widest uppercase">System Announcement Matrix</h3>
+            <p id="appPopupText" class="text-xs text-slate-400 leading-relaxed font-medium bg-slate-950/50 border border-white/5 p-4 rounded-xl text-left max-h-48 overflow-y-auto custom-scrollbar"></p>
+            <button onclick="closeSystemPopup()" class="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-slate-950 font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-xl transition-all">Establish Synchronized Entry</button>
+        </div>
+    </div>
+
+    <div id="tickerNoticeBar" class="bg-gradient-to-r from-emerald-950 via-slate-950 to-cyan-950 border-b border-emerald-500/20 text-emerald-400 py-2.5 text-xs font-mono font-bold hidden overflow-hidden tracking-wider">
+        <marquee id="tickerText" behavior="scroll" direction="left" class="w-full"></marquee>
+    </div>
+
+    <header class="cyber-header sticky top-0 z-40 w-full px-4 py-4 md:px-8 shadow-xl">
+        <div class="max-w-[1600px] mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3.5">
+                <div class="w-9 h-9 bg-gradient-to-tr from-emerald-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                    <i class="fa-solid fa-bolt text-slate-950 font-black text-sm"></i>
+                </div>
+                <span class="text-lg font-black tracking-wider text-white">TOFFEE<span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">PLUS</span> <span class="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded text-slate-400 font-mono tracking-widest ml-1">ULTRA v3.0</span></span>
+            </div>
+            <div id="liveStatusNode" class="flex items-center space-x-2.5 bg-emerald-500/5 border border-emerald-500/20 px-4 py-2 rounded-full text-[10px] font-black uppercase text-emerald-400 tracking-widest shadow-inner">
+                <span class="w-2 h-2 bg-emerald-400 rounded-full animate-ping shadow-[0_0_10px_#10b981]"></span>
+                <span class="font-mono">HYBRID CORE SECURE</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1600px] w-full mx-auto p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-8 flex-grow">
+        
+        <div class="w-full lg:w-[65%] space-y-6">
+            
+            <div class="relative w-full aspect-video bg-slate-950 rounded-[28px] overflow-hidden border border-white/5 shadow-2xl shadow-black/80">
+                
+                <div id="nativePlayerWrapper" class="w-full h-full">
+                    <video id="my-video" class="video-js vjs-big-play-centered w-full h-full" controls preload="auto" poster="https://placehold.co/1200x675/020617/10b981?text=Select+Live+Station+Terminal"></video>
+                </div>
+
+                <div id="iframePlayerWrapper" class="w-full h-full embedded-sandbox-matrix hidden">
+                    </div>
+
+                <div id="lockOverlay" class="absolute inset-0 bg-slate-950/98 backdrop-blur-xl hidden flex-col items-center justify-center p-8 text-center z-30">
+                    <div class="w-20 h-20 bg-gradient-to-tr from-emerald-500/10 to-cyan-500/10 text-emerald-400 rounded-3xl flex items-center justify-center text-3xl border border-emerald-500/20 shadow-2xl mb-5">
+                        <i class="fa-solid fa-fingerprint animate-pulse"></i>
+                    </div>
+                    <h2 class="text-base font-black tracking-widest uppercase text-white">Stream Authorization Protocol Required</h2>
+                    <p class="text-xs text-slate-400 max-w-sm mt-1.5 leading-relaxed font-medium">এই স্ট্রিম চ্যানেল নোডটি সক্রিয় করতে নিচের ভেরিফিকেশন স্পনসরড বাটন লিংকে ক্লিক করে ১২ ঘণ্টার জন্য ভেরিফিকেশন টোকেন সংগ্রহ করুন।</p>
+                    <button onclick="triggerTaskAdWatch()" class="mt-6 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-slate-950 font-black px-8 py-3.5 rounded-xl text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/10 transition-all">Authorize Terminal Link</button>
+                </div>
+            </div>
+
+            <div id="playerBottomNoticeBox" class="bg-rose-500/5 border border-rose-500/10 text-rose-400 p-4 rounded-2xl text-xs font-medium leading-relaxed hidden flex items-start gap-3 shadow-inner">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-rose-500 text-sm"></i>
+                <p id="playerBottomNoticeText"></p>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-900/40 border border-white/5 p-5 rounded-2xl shadow-inner">
+                <div class="flex items-center space-x-4">
+                    <img id="currentStationLogo" src="https://placehold.co/100x100/020617/ffffff?text=SYS" class="w-12 h-12 rounded-xl object-contain bg-slate-950 border border-white/10 p-1 shadow-md">
+                    <div>
+                        <h2 id="currentStationName" class="text-base font-black text-white tracking-wide">No Stream Endpoint Active</h2>
+                        <p id="currentStationCat" class="text-[11px] text-slate-500 font-mono mt-0.5 uppercase tracking-wider">Awaiting Matrix Grid Command</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-[35%] flex flex-col space-y-5">
+            
+            <div id="categoriesCluster" class="flex gap-2 overflow-x-auto pb-3.5 custom-scrollbar shrink-0 whitespace-nowrap w-full">
+                </div>
+
+            <div id="stationsGridBox" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3.5 overflow-y-auto max-h-[580px] pr-1.5 custom-scrollbar flex-grow w-full">
+                </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-white/5 bg-slate-950/40 text-center py-5 text-[10px] text-slate-600 font-mono tracking-widest uppercase">
+        &copy; 2026 ToffeePlus Engine Node Matrix Corp. Universal Protocols Configured.
+    </footer>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let videoPlayerInstance = videojs('my-video');
+        let masterCategories = {};
+        let masterChannels = {};
+        let selectedCategoryKey = "all";
+        let activePlayingChannelKey = null;
+        
+        let clickAdUrl = "";
+        let clickAdActiveStatus = false;
+        let mandatoryTaskAdUrl = "";
+        let mandatoryTaskAdActiveStatus = false;
+
+        // Active Session Sync
+        const myUserRef = push(ref(db, "liveUsers"));
+        set(myUserRef, { timestamp: serverTimestamp() });
+        window.addEventListener('beforeunload', () => set(myUserRef, null));
+
+        // Click Ads Setup Fetcher
+        onValue(ref(db, "adConfig"), (snap) => {
+            const data = snap.val();
+            if(data) {
+                clickAdUrl = data.url || "";
+                clickAdActiveStatus = data.status || false;
+            }
+        });
+
+        // 12 Hours Token Core Validation Rules
+        onValue(ref(db, "taskAdConfig"), (snap) => {
+            const data = snap.val();
+            if(data) {
+                mandatoryTaskAdUrl = data.url || "";
+                mandatoryTaskAdActiveStatus = data.status || false;
+            }
+        });
+
+        function verifyLockState() {
+            if(!mandatoryTaskAdActiveStatus) return false; 
+            const lastWatch = localStorage.getItem('toffee_12h_ad_token');
+            if(!lastWatch) return true; 
+            const diff = Date.now() - parseInt(lastWatch);
+            return diff > (12 * 60 * 60 * 1000); 
+        }
+
+        window.triggerTaskAdWatch = function() {
+            if(mandatoryTaskAdUrl) {
+                window.open(mandatoryTaskAdUrl, '_blank');
+                localStorage.setItem('toffee_12h_ad_token', Date.now().toString());
+                document.getElementById('lockOverlay').classList.add('hidden');
+                alert("ভেরিফিকেশন সফল! স্ট্রিম প্রোটোকল আনলক করা হয়েছে। চ্যানেলটি পুনরায় প্লে করুন।");
+            }
+        }
+
+        // Top Ticker Marquee Layer
+        onValue(ref(db, "noticeConfig"), (snap) => {
+            const data = snap.val();
+            const bar = document.getElementById('tickerNoticeBar');
+            if(data && data.status && data.text) {
+                document.getElementById('tickerText').innerText = data.text;
+                bar.classList.remove('hidden');
+            } else {
+                bar.classList.add('hidden');
+            }
+        });
+
+        // Under Player Bottom Notice Layer
+        onValue(ref(db, "playerNoticeConfig"), (snap) => {
+            const data = snap.val();
+            const box = document.getElementById('playerBottomNoticeBox');
+            if(data && data.status && data.text) {
+                document.getElementById('playerBottomNoticeText').innerText = data.text;
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        });
+
+        // Broadcast Popup Layer Modal
+        onValue(ref(db, "popupConfig"), (snap) => {
+            const data = snap.val();
+            if(data && data.status && data.text) {
+                const alreadyShown = sessionStorage.getItem('popup_displayed');
+                if(!alreadyShown) {
+                    document.getElementById('appPopupText').innerText = data.text;
+                    document.getElementById('appPopupModal').style.display = 'flex';
+                }
+            }
+        });
+        window.closeSystemPopup = function() {
+            sessionStorage.setItem('popup_displayed', 'true');
+            document.getElementById('appPopupModal').style.display = 'none';
+        }
+
+        // Category Rendering Engine Modules
+        onValue(ref(db, "categories"), (snap) => {
+            masterCategories = snap.val() || {};
+            renderCategoriesUI();
+        });
+
+        function renderCategoriesUI() {
+            const cluster = document.getElementById('categoriesCluster');
+            if(!cluster) return;
+            let html = `<button onclick="filterCategoryNode('all')" class="category-pill px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider text-slate-400 ${selectedCategoryKey === 'all' ? 'active' : ''}">ALL CHANNELS</button>`;
+            Object.keys(masterCategories).forEach(key => {
+                html += `<button onclick="filterCategoryNode('${key}')" class="category-pill px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider text-slate-400 ${selectedCategoryKey === key ? 'active' : ''}">${masterCategories[key].name.toUpperCase()}</button>`;
+            });
+            cluster.innerHTML = html;
+        }
+
+        window.filterCategoryNode = function(key) {
+            selectedCategoryKey = key;
+            renderCategoriesUI();
+            renderChannelsUI();
+        }
+
+        // Channel Sync and Card Generator
+        onValue(ref(db, "channels"), (snap) => {
+            masterChannels = snap.val() || {};
+            renderChannelsUI();
+        });
+
+        function renderChannelsUI() {
+            const grid = document.getElementById('stationsGridBox');
+            if(!grid) return;
+            let html = "";
+            Object.keys(masterChannels).forEach(key => {
+                const ch = masterChannels[key];
+                if(selectedCategoryKey !== "all" && ch.categoryId !== selectedCategoryKey) return;
+                
+                const isPlaying = (key === activePlayingChannelKey) ? 'playing-node' : '';
+                
+                html += `
+                    <div onclick="bootLiveStation('${key}')" class="station-card p-4 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer space-y-3 ${isPlaying}">
+                        <div class="w-14 h-14 rounded-2xl overflow-hidden bg-slate-950 border border-white/5 flex items-center justify-center p-1.5 shadow-inner">
+                            <img src="${ch.logo || 'https://placehold.co/100x100/020617/10b981?text=TV'}" class="w-full h-full object-contain rounded-xl">
+                        </div>
+                        <span class="text-xs font-bold tracking-wide text-slate-200 truncate w-full">${ch.name}</span>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html || `<div class="col-span-full text-center py-16 text-slate-600 font-mono italic text-xs">No terminal stations listed inside this matrix sector.</div>`;
+        }
+
+        // 🟢 ADVANCED INTELLIGENT ROUTER ENGINE (FIXED HLS & IFRAME PARSING CORE)
+        window.bootLiveStation = function(key) {
+            const ch = masterChannels[key];
+            if(!ch) return;
+
+            // Trigger Forced Ads
+            if(clickAdActiveStatus && clickAdUrl) {
+                window.open(clickAdUrl, '_blank');
+            }
+
+            // Lock Overlay verification gate
+            if(verifyLockState()) {
+                document.getElementById('lockOverlay').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('lockOverlay').classList.add('hidden');
+            }
+
+            // Update UI Playing Selection State Indicators
+            activePlayingChannelKey = key;
+            renderChannelsUI();
+
+            // Meta Render Layer Interfacing
+            document.getElementById('currentStationLogo').src = ch.logo || "https://placehold.co/100x100/020617/ffffff?text=SYS";
+            document.getElementById('currentStationName').innerText = ch.name;
+            document.getElementById('currentStationCat').innerText = masterCategories[ch.categoryId] ? masterCategories[ch.categoryId].name : "Live System Endpoint";
+
+            const payloadRaw = ch.url ? ch.url.trim() : "";
+            const iframeWrapper = document.getElementById('iframePlayerWrapper');
+
+            // 🔍 SMART PARSER: Validates if the string is a complete structural Iframe/HTML component or just a source link.
+            if (payloadRaw.startsWith("<iframe") || payloadRaw.includes("</iframe>") || payloadRaw.startsWith("<html") || payloadRaw.startsWith("<div")) {
+                
+                // 1. Switch Active Players Layer Viewport
+                videoPlayerInstance.pause();
+                document.getElementById('nativePlayerWrapper').classList.add('hidden');
+                
+                // 2. Safe Injection Engine Processing
+                iframeWrapper.innerHTML = payloadRaw;
+                
+                // 3. Ultra Fix: Traverses the newly injected DOM element to force attributes to adapt perfectly to 100% dimensions.
+                const innerIframe = iframeWrapper.querySelector('iframe');
+                if (innerIframe) {
+                    innerIframe.setAttribute('width', '100%');
+                    innerIframe.setAttribute('height', '100%');
+                    innerIframe.style.width = '100%';
+                    innerIframe.style.height = '100%';
+                    
+                    // Essential feature for cross-origin permissions
+                    innerIframe.setAttribute('allowfullscreen', 'true');
+                    innerIframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+                }
+                
+                iframeWrapper.classList.remove('hidden');
+                
+            } else {
+                
+                // 1. Clean and reset the iframe sandbox to prevent background streaming processes.
+                iframeWrapper.classList.add('hidden');
+                iframeWrapper.innerHTML = "";
+                
+                // 2. Display the structural native video JS components
+                document.getElementById('nativePlayerWrapper').classList.remove('hidden');
+                
+                let streamType = "application/x-mpegURL"; // Default M3U8 setup
+                if(payloadRaw.endsWith(".mp4") || payloadRaw.includes(".mp4?")) {
+                    streamType = "video/mp4";
+                }
+
+                try {
+                    videoPlayerInstance.src({
+                        src: payloadRaw,
+                        type: streamType
+                    });
+                    videoPlayerInstance.ready(function() {
+                        this.play().catch(err => console.log("Autoplay restrictions engaged: ", err));
+                    });
+                } catch (error) {
+                    console.error("Critical native engine streaming failure: ", error);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
