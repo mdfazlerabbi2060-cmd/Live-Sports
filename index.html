@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="bn" class="h-full overflow-hidden select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ToffeePlus - Premium Live TV Engine</title>
+    
+    <!-- Ultra Stream Framework Assets -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Video.js Playback Architecture -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+
+    <style>
+        :root {
+            --neon-cyan: #06b6d4;
+            --neon-pink: #ec4899;
+            --dark-base: #030712;
+            --panel-bg: #0b0f19;
+            --card-bg: #111827;
+        }
+
+        html, body {
+            max-width: 100%;
+            height: 100% !important;
+            overflow: hidden !important; /* স্ক্রলিং পুরোপুরি লক */
+            background-color: var(--dark-base);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* 🚀 প্রিমিয়াম স্প্ল্যাশ স্ক্রিন */
+        #appSplashScreen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+        .splash-pulse-logo {
+            animation: logoGlowPulse 1.8s infinite ease-in-out;
+        }
+        @keyframes logoGlowPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(236, 72, 153, 0.2); }
+            50% { transform: scale(1.03); box-shadow: 0 0 50px rgba(6, 182, 212, 0.4); }
+        }
+
+        /* 🎬 ভিডিও প্লেয়ার */
+        .video-js { background-color: #000000 !important; }
+        .vjs-big-play-button {
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan)) !important;
+            border: none !important;
+            border-radius: 50% !important;
+            width: 60px !important;
+            height: 60px !important;
+            line-height: 60px !important;
+            margin-top: -30px !important;
+            margin-left: -30px !important;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.4) !important;
+        }
+
+        /* 📁 ডাইনামিক ক্যাটাগরি পিলস */
+        .category-pill {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #9ca3af;
+            transition: all 0.2s ease;
+        }
+        .category-pill.active {
+            background: linear-gradient(90deg, rgba(236, 72, 153, 0.15), rgba(6, 182, 212, 0.15)) !important;
+            border-color: var(--neon-cyan) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+        }
+
+        /* 📡 হরাইজন্টাল চ্যানেল লিস্ট লেআউট (1638.jpg ম্যাচিং টাইট স্কয়ার ফিট) */
+        .stations-horizontal-scroller {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .station-card {
+            min-width: 95px;
+            max-width: 95px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .channel-logo-container {
+            width: 100%;
+            aspect-ratio: 1/1; /* স্কয়ার প্রিমিয়াম বক্স */
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .channel-logo-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .station-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #9ca3af;
+            margin-top: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .station-card.playing-node {
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.35);
+        }
+        .station-card.playing-node .station-label { color: #ffffff !important; }
+
+        /* 📜 কাস্টম স্ক্রলবার */
+        .custom-scrollbar::-webkit-scrollbar { height: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 9px; }
+
+        .embedded-sandbox-matrix iframe { width: 100% !important; height: 100% !important; border: none; }
+
+        .premium-glow-btn {
+            background: linear-gradient(90deg, var(--neon-pink), #8b5cf6, var(--neon-cyan));
+            background-size: 200% auto;
+            animation: gradientShine 3s infinite linear;
+        }
+        @keyframes gradientShine {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        /* 🎭 কাস্টম পপআপ অ্যানিমেশন */
+        @keyframes modalEntrance {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .animate-modal { animation: modalEntrance 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+    </style>
+</head>
+<body class="text-slate-200 h-full flex flex-col bg-slate-950 select-none">
+
+    <div id="appSplashScreen" class="w-full h-full">
+        <div class="text-center flex flex-col items-center">
+            <div class="w-16 h-16 bg-gradient-to-tr from-cyan-500 to-pink-500 rounded-2xl flex items-center justify-center splash-pulse-logo mb-4">
+                <i class="fa-solid fa-play text-white text-2xl ml-0.5"></i>
+            </div>
+            <h2 class="text-lg font-black tracking-widest text-white uppercase font-mono">ToffeePlus</h2>
+            <div class="w-12 h-0.5 bg-gradient-to-r from-cyan-400 to-pink-500 mt-2 rounded-full animate-pulse"></div>
+        </div>
+    </div>
+
+    <header class="border-b border-white/5 bg-slate-950/60 backdrop-blur-md px-4 py-3 shrink-0">
+        <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
+            
+            <div class="flex items-center space-x-2 shrink-0">
+                <div class="w-8 h-8 bg-gradient-to-tr from-cyan-500 to-pink-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                    <i class="fa-solid fa-play text-white text-xs ml-0.5"></i>
+                </div>
+                <h1 class="text-base font-black text-white tracking-wider uppercase font-mono">
+                    Toffee<span class="text-cyan-400">Plus</span>
+                </h1>
+            </div>
+            
+            <div class="relative flex-grow max-w-xs">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500 text-xs">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+                <input type="text" id="channelSearchInput" oninput="triggerLiveChannelSearch()" placeholder="চ্যানেল খুঁজুন..." class="w-full bg-slate-900/60 border border-white/5 text-slate-200 rounded-xl pl-9 pr-4 py-1.5 text-xs focus:outline-none focus:border-cyan-500/50 transition-all font-medium">
+            </div>
+        </div>
+    </header>
+
+    <div id="tickerNoticeBar" class="hidden bg-cyan-950/40 border-b border-cyan-500/10 text-cyan-400 px-4 py-1.5 text-[11px] font-medium shrink-0 overflow-hidden">
+        <div class="max-w-[1200px] mx-auto flex items-center gap-3">
+            <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide shrink-0"><i class="fa-solid fa-bullhorn mr-1"></i> নোটিশ</span>
+            <marquee id="tickerText" scrollamount="4" class="w-full"></marquee>
+        </div>
+    </div>
+
+    <div id="forcedTaskAdGate" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[99999] flex items-center justify-center p-4">
+        <div class="max-w-sm w-full bg-slate-900 border border-white/5 rounded-3xl p-5 shadow-2xl space-y-5 text-center">
+            
+            <div id="adGateInitialView" class="space-y-4">
+                <div class="w-14 h-14 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 text-xl animate-bounce">
+                    <i class="fa-solid fa-unlock-keyhole"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-sm font-black text-white uppercase tracking-wide">Unlock Premium Stream</h3>
+                    <p class="text-[11px] text-slate-400 px-2 leading-relaxed">চ্যানেলটি দেখতে নিচের বাটনে ক্লিক করে স্পনসর ভিডিওটি সম্পূর্ণ লোড হতে দিন এবং নির্দিষ্ট সময় অপেক্ষা করুন।</p>
+                </div>
+                <button onclick="startInlineIframeAdEngine()" class="w-full premium-glow-btn text-white font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all shadow-md">
+                    <i class="fa-solid fa-bolt mr-1.5"></i> Click to Unlock
+                </button>
+            </div>
+
+            <div id="adGateActiveStreamingView" class="hidden space-y-4">
+                <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-spinner animate-spin text-cyan-400"></i> Verifying Stream Guard
+                    </span>
+                    <div class="bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full text-cyan-400 font-mono text-xs font-black">
+                        <span id="countdownClockDisplay">12</span>s
+                    </div>
+                </div>
+                
+                <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="countdownProgressBar" class="h-full bg-gradient-to-r from-cyan-500 to-pink-500 transition-all duration-1000" style="width: 100%;"></div>
+                </div>
+
+                <div class="w-full aspect-video bg-black rounded-xl overflow-hidden border border-white/5 shadow-inner relative">
+                    <iframe id="inlineAdGateSandboxFrame" src="" class="w-full h-full object-cover"></iframe>
+                </div>
+                <p class="text-[9px] text-slate-500 italic">⚠️ অনুগ্রহ করে বিজ্ঞাপন স্ক্রিনটি কাটবেন না, টাইম শেষ হলে চ্যানেল অটো প্লে হবে।</p>
+            </div>
+        </div>
+    </div>
+    <main class="flex-grow flex flex-col max-w-[1200px] w-full mx-auto px-4 py-2 overflow-hidden gap-3">
+        
+        <div class="w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.8)] border border-white/5 relative shrink-0">
+            
+            <div id="nativeVideoPlayerWrapper" class="w-full h-full">
+                <video id="mainStreamingCore" class="video-js vjs-default-skin w-full h-full object-cover" controls preload="auto" data-setup='{}'></video>
+            </div>
+
+            <div id="embeddedSandboxWrapper" class="w-full h-full hidden embedded-sandbox-matrix bg-slate-950">
+                </div>
+        </div>
+
+        <div class="w-full shrink-0 space-y-1">
+            <span class="text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase block"><i class="fa-solid fa-folder-tree mr-1"></i> Network Categories</span>
+            <div id="appCategoriesFilterGrid" class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 whitespace-nowrap">
+                <span class="text-xs text-slate-600 italic">Synchronizing categories...</span>
+            </div>
+        </div>
+
+        <div class="w-full bg-slate-900/40 border border-white/5 p-3 rounded-2xl backdrop-blur-sm shrink-0 overflow-hidden">
+            <div class="flex items-center justify-between border-b border-white/5 pb-1 mb-1.5">
+                <span class="text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping"></span> Live Stations Pipeline
+                </span>
+                <span id="renderedCountLabel" class="text-[9px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded-full">0 Active Nodes</span>
+            </div>
+
+            <div id="appChannelsScrollerContainer" class="stations-horizontal-scroller custom-scrollbar w-full py-0.5">
+                <div class="text-center py-2 text-slate-600 italic text-xs w-full">Connecting to matrix cloud...</div>
+            </div>
+        </div>
+
+        <div id="playerSubNoticeBox" class="hidden bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl px-4 py-2 text-[11px] font-semibold flex items-center gap-2.5 shrink-0">
+            <i class="fa-solid fa-triangle-exclamation text-xs shrink-0"></i>
+            <p id="playerSubNoticeText" class="truncate leading-none"></p>
+        </div>
+
+        <div class="flex-grow flex items-center justify-center overflow-hidden w-full min-h-[60px] py-1">
+            <div id="adminBannerContainer" class="w-full h-full max-h-[120px] hidden rounded-xl overflow-hidden border border-white/5 bg-slate-900/20 shadow-inner">
+                <a id="adminBannerAnchor" href="#" target="_blank" class="w-full h-full block">
+                    <img id="adminBannerImage" src="" alt="Advertisement" class="w-full h-full object-contain rounded-xl">
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="premiumBroadcastModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[999999] flex items-center justify-center p-4">
+        <div class="max-w-sm w-full bg-slate-900 border border-white/10 rounded-2xl p-5 shadow-[0_0_50px_rgba(6,182,212,0.15)] animate-modal text-center space-y-4">
+            <div class="w-12 h-12 bg-gradient-to-tr from-cyan-500 to-pink-500 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/20">
+                <i class="fa-solid fa-bullhorn text-white text-base animate-pulse"></i>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-xs font-black uppercase text-cyan-400 tracking-widest font-mono">Announcement</h4>
+                <div class="h-px w-12 bg-slate-800 mx-auto"></div>
+                <p id="broadcastModalContentText" class="text-xs text-slate-300 leading-relaxed font-medium pt-1 max-h-[150px] overflow-y-auto custom-scrollbar px-1"></p>
+            </div>
+            <button onclick="closePremiumBroadcastModal()" class="w-full bg-slate-800 hover:bg-slate-700 border border-white/5 text-white font-bold py-2 rounded-xl text-xs uppercase tracking-wider transition-all">
+                Dismiss Notice
+            </button>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Admin প্যানেলের সাথে সিংক্রোনাইজড কোর ফায়ারবেস কনফিগ
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+            authDomain: "toffeeplus-wc2026.firebaseapp.com",
+            databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+            projectId: "toffeeplus-wc2026",
+            storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+            messagingSenderId: "571762163240",
+            appId: "1:571762163240:web:2041f98df771db2c6fff1d",
+            measurementId: "G-V74H1VZSQ3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Core State Engine Globals
+        let masterCategories = {};
+        let masterChannels = {};
+        let selectedCategoryKey = null; // অল চ্যানেল স্থায়ীভাবে রিমুভড
+        let activePlayingChannelKey = null;
+        let searchQueryString = "";
+        let globalAdConfig = { url: "", status: false };
+        let globalTaskAdConfig = { url: "", status: false };
+        let activeVideoJsInstance = null;
+
+        // Initialize Native VideoJS Pipeline
+        document.addEventListener("DOMContentLoaded", () => {
+            activeVideoJsInstance = videojs('mainStreamingCore', {
+                fluid: true,
+                autoplay: false,
+                controls: true,
+                responsive: true
+            });
+            
+            // স্প্ল্যাশ স্ক্রিন রিমুভাল
+            setTimeout(() => {
+                const splash = document.getElementById('appSplashScreen');
+                if(splash) {
+                    splash.style.opacity = '0';
+                    setTimeout(() => splash.style.visibility = 'hidden', 500);
+                }
+            }, 1500);
+        });
+
+        // Live User Terminal Tracker
+        const liveUserRef = push(ref(db, "liveUsers"));
+        set(liveUserRef, Date.now());
+        window.addEventListener("beforeunload", () => set(liveUserRef, null));
+
+        // 📢 ১. TICKER MESSAGES SYSTEM (চলমান শিরোনাম নোটিশ রিয়েল-টাইম ফিক্স)
+        onValue(ref(db, "noticeConfig"), (snap) => {
+            const data = snap.val();
+            const tickerBar = document.getElementById('tickerNoticeBar');
+            const tickerText = document.getElementById('tickerText');
+            
+            if(data && data.status && data.text && data.text.trim() !== "") {
+                tickerText.innerText = data.text;
+                tickerBar.classList.remove('hidden');
+            } else {
+                tickerBar.classList.add('hidden');
+                tickerText.innerText = "";
+            }
+        });
+
+        // 🚨 ২. PLAYER SUB-NOTICE DYNAMIC WARNING (ভিডিও প্লেয়ারের নিচের সাব-নোটিশ বক্স)
+        onValue(ref(db, "playerNoticeConfig"), (snap) => {
+            const data = snap.val();
+            const box = document.getElementById('playerSubNoticeBox');
+            if(data && data.status && data.text && data.text.trim() !== "") {
+                document.getElementById('playerSubNoticeText').innerText = data.text;
+                box.classList.remove('hidden');
+            } else {
+                box.classList.add('hidden');
+            }
+        });
+
+        // 📢 ৩. ANIMATED WELCOME BROADCAST POPUP SYSTEM (মাল্টি-শো পপআপ মোডাল ফিক্স)
+        onValue(ref(db, "popupConfig"), (snap) => {
+            const data = snap.val();
+            const modal = document.getElementById('premiumBroadcastModal');
+            const modalContent = document.getElementById('broadcastModalContentText');
+            
+            if(data && data.status && data.text && data.text.trim() !== "") {
+                const lastPopupSeen = sessionStorage.getItem('broadcastSeenToken');
+                
+                // ডাটাবেজে টেক্সট আপডেট হলে বা নতুন সেশনে এটি চমৎকার অ্যানিমেশনে ট্রিপল ভেরিফাই হয়ে শো করবে
+                if(lastPopupSeen !== data.text) {
+                    modalContent.innerText = data.text;
+                    modal.classList.remove('hidden');
+                }
+            } else {
+                modal.classList.add('hidden');
+            }
+        });
+
+        // কাস্টম মোডাল ক্লোজ ফাংশন ও সেশন ট্র্যাকার
+        window.closePremiumBroadcastModal = function() {
+            const modal = document.getElementById('premiumBroadcastModal');
+            const modalContent = document.getElementById('broadcastModalContentText').innerText;
+            
+            // সেশনে সেভ করে রাখা হচ্ছে যাতে একনাগাড়ে ডিস্টার্ব না করে, পেজ রিফ্রেশ বা ব্যাকএন্ডে টেক্সট বদলালে আবার আসবে
+            sessionStorage.setItem('broadcastSeenToken', modalContent);
+            modal.classList.add('hidden');
+        }
+
+        // 🖼️ ৪. DYNAMIC AD BANNER INTERFACE DIRECT ENGINE (এডমিন প্যানেল ব্যানার লোডার)
+        onValue(ref(db, "bannerConfig"), (snap) => {
+            const data = snap.val();
+            const container = document.getElementById('adminBannerContainer');
+            const anchor = document.getElementById('adminBannerAnchor');
+            const img = document.getElementById('adminBannerImage');
+
+            if(data && data.status && data.url && data.url.trim() !== "") {
+                img.src = data.url;
+                anchor.href = data.link || "#";
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+                img.src = "";
+            }
+        });
+
+        // Sync Global Interlock Ad States
+        onValue(ref(db, "adConfig"), (snap) => { if(snap.exists()) globalAdConfig = snap.val(); });
+        onValue(ref(db, "taskAdConfig"), (snap) => { if(snap.exists()) globalTaskAdConfig = snap.val(); });
+
+        // 📁 Sync Categories (ডাইনামিক ক্যাটাগরি বাটন জেনারেটর - অল চ্যানেল স্থায়ীভাবে রিমুভড)
+        onValue(ref(db, "categories"), (snap) => {
+            masterCategories = snap.val() || {};
+            const filterContainer = document.getElementById('appCategoriesFilterGrid');
+            if(!filterContainer) return;
+
+            let html = "";
+            const keys = Object.keys(masterCategories);
+
+            if(keys.length > 0) {
+                // All Channels রিমুভ করে প্রথম ডাইনামিক ক্যাটাগরিকে অটো-অ্যাক্টিভ করা হচ্ছে
+                if(!selectedCategoryKey || !masterCategories[selectedCategoryKey]) {
+                    selectedCategoryKey = keys[0];
+                }
+
+                keys.forEach(key => {
+                    const isActive = (key === selectedCategoryKey) ? "active" : "";
+                    html += `<button onclick="switchCategoryFilter('${key}')" id="pill_${key}" class="category-pill ${isActive} text-[11px] font-bold px-3.5 py-1.5 rounded-full transition-all">${masterCategories[key].name}</button>`;
+                });
+            } else {
+                html = `<span class="text-xs text-slate-600 italic">No categories found.</span>`;
+            }
+
+            filterContainer.innerHTML = html;
+            renderChannelsViewHub();
+        });
+
+        // 📡 Sync Channels
+        onValue(ref(db, "channels"), (snap) => {
+            masterChannels = snap.val() || {};
+            renderChannelsViewHub();
+        });
+
+        // Category Filter Controller Switcher
+        window.switchCategoryFilter = function(categoryKey) {
+            selectedCategoryKey = categoryKey;
+            document.querySelectorAll('.category-pill').forEach(btn => btn.classList.remove('active'));
+            
+            const activePill = document.getElementById(`pill_${categoryKey}`);
+            if(activePill) activePill.classList.add('active');
+            
+            renderChannelsViewHub();
+        }
+
+        // 🔍 REALTIME LIVE KEYBOARD SEARCH FILTER
+        window.triggerLiveChannelSearch = function() {
+            const input = document.getElementById('channelSearchInput');
+            searchQueryString = input.value.trim().toLowerCase();
+            renderChannelsViewHub();
+        }
+
+        // 🎞️ Render Channels Slider Grid Logic (টাইট স্কয়ার লেআউট)
+        function renderChannelsViewHub() {
+            const container = document.getElementById('appChannelsScrollerContainer');
+            const countLabel = document.getElementById('renderedCountLabel');
+            if(!container) return;
+
+            let html = "";
+            let matchCount = 0;
+
+            Object.keys(masterChannels).forEach(key => {
+                const ch = masterChannels[key];
+                
+                // ১. ক্যাটাগরি ফিল্টারিং ফিল্টার
+                if(ch.categoryId !== selectedCategoryKey) return;
+
+                // ২. সার্চ কুয়েরি ফিল্টার (ইনস্ট্যান্ট টাইপিং ম্যাচ)
+                if(searchQueryString !== "" && !ch.name.toLowerCase().includes(searchQueryString)) return;
+
+                matchCount++;
+                const isPlaying = (key === activePlayingChannelKey) ? "playing-node" : "";
+
+                html += `
+                    <div onclick="processChannelRouteGate('${key}')" class="station-card ${isPlaying}" id="card_${key}">
+                        <div class="channel-logo-container">
+                            <img src="${ch.logo || 'https://placehold.co/120x120/ffffff/000000?text=NO+LOGO'}" alt="${ch.name}" loading="lazy">
+                        </div>
+                        <div class="station-label">${ch.name}</div>
+                    </div>
+                `;
+            });
+
+            countLabel.innerText = `${matchCount} Nodes Rendered`;
+            container.innerHTML = html || `<div class="text-center py-3 text-slate-500 italic text-xs w-full">এই ক্যাটাগরিতে কোনো চ্যানেল নেই।</div>`;
+        }
+
+        // 🛡️ SECURITY CONTROL: ROUTING GATE & ADS ENGINE INTERLOCK
+        window.processChannelRouteGate = function(channelKey) {
+            const ch = masterChannels[channelKey];
+            if(!ch) return;
+
+            if(globalTaskAdConfig && globalTaskAdConfig.status && globalTaskAdConfig.url) {
+                const gateCompleted = localStorage.getItem(`task_gate_v5_${channelKey}`);
+                const timestamp = localStorage.getItem(`task_time_v5_${channelKey}`);
+                const twelveHours = 12 * 60 * 60 * 1000;
+
+                if(!gateCompleted || !timestamp || (Date.now() - timestamp > twelveHours)) {
+                    triggerAdGateLockOverlay(channelKey);
+                    return;
+                }
+            }
+
+            if(globalAdConfig && globalAdConfig.status && globalAdConfig.url) {
+                window.open(globalAdConfig.url, '_blank');
+            }
+
+            executeStreamingPlayback(channelKey);
+        }
+
+        function triggerAdGateLockOverlay(channelKey) {
+            const overlay = document.getElementById('forcedTaskAdGate');
+            overlay.classList.remove('hidden');
+            document.getElementById('adGateInitialView').classList.remove('hidden');
+            document.getElementById('adGateActiveStreamingView').classList.add('hidden');
+            overlay.dataset.targetNode = channelKey;
+        }
+
+        window.startInlineIframeAdEngine = function() {
+            const overlay = document.getElementById('forcedTaskAdGate');
+            const channelKey = overlay.dataset.targetNode;
+            
+            document.getElementById('adGateInitialView').classList.add('hidden');
+            document.getElementById('adGateActiveStreamingView').classList.remove('hidden');
+            
+            document.getElementById('inlineAdGateSandboxFrame').src = globalTaskAdConfig.url;
+
+            let secondsLeft = 12;
+            const clock = document.getElementById('countdownClockDisplay');
+            const bar = document.getElementById('countdownProgressBar');
+            
+            clock.innerText = secondsLeft;
+            bar.style.width = "100%";
+
+            const countdownInterval = setInterval(() => {
+                secondsLeft--;
+                clock.innerText = secondsLeft;
+                bar.style.width = `${(secondsLeft / 12) * 100}%`;
+
+                if(secondsLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    
+                    localStorage.setItem(`task_gate_v5_${channelKey}`, "PASSED");
+                    localStorage.setItem(`task_time_v5_${channelKey}`, Date.now().toString());
+                    
+                    document.getElementById('forcedTaskAdGate').classList.add('hidden');
+                    document.getElementById('inlineAdGateSandboxFrame').src = "about:blank";
+                    
+                    executeStreamingPlayback(channelKey);
+                }
+            }, 1000);
+        }
+
+        // 🎬 MAIN STREAMING PLAYBACK EXECUTION CONTROLLER
+        function executeStreamingPlayback(channelKey) {
+            const ch = masterChannels[channelKey];
+            if(!ch) return;
+
+            activePlayingChannelKey = channelKey;
+
+            document.querySelectorAll('.station-card').forEach(card => card.classList.remove('playing-node'));
+            const activeCard = document.getElementById(`card_${channelKey}`);
+            if(activeCard) activeCard.classList.add('playing-node');
+
+            const isIframe = (ch.url && (ch.url.includes("<iframe") || ch.url.includes("</iframe>")));
+            
+            const nativeWrapper = document.getElementById('nativeVideoPlayerWrapper');
+            const embedWrapper = document.getElementById('embeddedSandboxWrapper');
+
+            if(isIframe) {
+                if(activeVideoJsInstance) activeVideoJsInstance.pause();
+                nativeWrapper.classList.add('hidden');
+                embedWrapper.classList.remove('hidden');
+                embedWrapper.innerHTML = ch.url;
+            } else {
+                embedWrapper.classList.add('hidden');
+                embedWrapper.innerHTML = "";
+                nativeWrapper.classList.remove('hidden');
+
+                if(activeVideoJsInstance) {
+                    activeVideoJsInstance.src({
+                        src: ch.url,
+                        type: ch.url.includes('.mp4') ? 'video/mp4' : 'application/x-mpegURL'
+                    });
+                    activeVideoJsInstance.ready(() => {
+                        activeVideoJsInstance.play().catch(err => console.log("Autoplay context lock handler:", err));
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
