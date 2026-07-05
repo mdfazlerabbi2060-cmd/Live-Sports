@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>ToffeePlus - Premium Live TV</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- HLS.js — দ্রুত, হালকা ও আরও ভালোভাবে টিউনযোগ্য HLS ইঞ্জিন -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root { --neon-cyan: #06b6d4; --neon-pink: #ec4899; --neon-gold: #f59e0b; --dark-base: #030712; --card-bg: #111827; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; min-height: 100%; background-color: var(--dark-base); font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; overflow-y: auto !important; height: auto !important; }
+
+        /* স্প্ল্যাশ স্ক্রিন */
+        #appSplashScreen { position: fixed; inset: 0; background: radial-gradient(ellipse at center, #0f172a 0%, #030712 100%); z-index: 999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s ease, visibility 0.8s; }
+        .splash-container { text-align: center; position: relative; }
+        .splash-logo-wrapper { width: 90px; height: 90px; margin: 0 auto 20px; position: relative; }
+        .splash-logo-wrapper .logo-ring { position: absolute; inset: -8px; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--neon-cyan); border-right-color: var(--neon-pink); animation: spinRing 1.2s linear infinite; }
+        .splash-logo-wrapper .logo-ring:nth-child(2) { inset: -16px; border-top-color: var(--neon-pink); border-right-color: var(--neon-cyan); animation-duration: 1.8s; animation-direction: reverse; }
+        @keyframes spinRing { to { transform: rotate(360deg); } }
+        .splash-logo-inner { width: 100%; height: 100%; background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink)); border-radius: 24px; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; box-shadow: 0 0 60px rgba(6,182,212,0.3); animation: logoPulse 2s ease-in-out infinite; }
+        @keyframes logoPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 40px rgba(6,182,212,0.3); } 50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(236,72,153,0.4); } }
+        .splash-logo-inner i { font-size: 36px; color: white; margin-left: 4px; }
+        .splash-title { font-size: 24px; font-weight: 900; color: white; letter-spacing: 4px; text-transform: uppercase; font-family: 'Courier New', monospace; }
+        .splash-title span { background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .splash-loader-bar { width: 180px; height: 3px; background: rgba(255,255,255,0.05); border-radius: 99px; margin: 20px auto 0; overflow: hidden; }
+        .splash-loader-bar .progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)); border-radius: 99px; animation: loadProgress 2.5s ease-in-out forwards; }
+        @keyframes loadProgress { 0% { width: 0%; } 20% { width: 25%; } 50% { width: 55%; } 75% { width: 80%; } 100% { width: 100%; } }
+        .splash-version { font-size: 9px; color: rgba(255,255,255,0.15); margin-top: 12px; letter-spacing: 3px; font-family: monospace; }
+
+        /* ক্যাটাগরি পিলস */
+        .category-pill { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: #9ca3af; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); font-size: 11px; font-weight: 700; padding: 6px 16px; border-radius: 30px; cursor: pointer; white-space: nowrap; }
+        .category-pill:hover { background: rgba(255,255,255,0.05); color: #e5e7eb; }
+        .category-pill.active { background: linear-gradient(90deg, rgba(236,72,153,0.2), rgba(6,182,212,0.2)) !important; border-color: var(--neon-cyan) !important; color: #fff !important; box-shadow: 0 0 25px rgba(6,182,212,0.15); }
+        .category-pill.premium-pill { border-color: var(--neon-gold) !important; color: var(--neon-gold) !important; }
+        .category-pill.premium-pill::after { content: ' 👑'; font-size: 10px; }
+
+        /* চ্যানেল কার্ড */
+        .stations-horizontal-scroller { display: flex; gap: 12px; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; padding: 4px 8px; }
+        .station-card { min-width: 100px; max-width: 100px; background: var(--card-bg); border: 2px solid rgba(255,255,255,0.05); border-radius: 14px; padding: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; background: linear-gradient(145deg, rgba(17,24,39,0.9), rgba(11,15,25,0.9)); flex-shrink: 0; }
+        .station-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.1); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+        .station-card.premium-node { border-color: rgba(245,158,11,0.3) !important; background: linear-gradient(145deg, rgba(17,24,39,0.95), rgba(30,20,10,0.95)) !important; }
+        .station-card.premium-node.premium-glow { animation: premiumGlow 2.5s ease-in-out infinite; }
+        @keyframes premiumGlow { 0%,100% { box-shadow: 0 0 15px rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); } 50% { box-shadow: 0 0 30px rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.4); } }
+        .premium-badge { position: absolute; top: -8px; right: -8px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 7px; font-weight: 800; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.8px; box-shadow: 0 0 25px rgba(245,158,11,0.4); text-transform: uppercase; z-index: 10; display: flex; align-items: center; gap: 4px; animation: premiumBadgePulse 2s ease-in-out infinite; }
+        @keyframes premiumBadgePulse { 0%,100% { box-shadow: 0 0 15px rgba(245,158,11,0.3); transform: scale(1); } 50% { box-shadow: 0 0 35px rgba(245,158,11,0.7); transform: scale(1.05); } }
+        .premium-badge i { font-size: 8px; }
+        .station-card.premium-node.hide-premium-badge .premium-badge,
+        .station-card.premium-node.hide-premium-badge .premium-lock-badge { display: none !important; }
+        .premium-lock-badge { margin-top: 4px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.2); border-radius: 20px; padding: 2px 10px; display: inline-flex; align-items: center; gap: 4px; font-size: 8px; font-weight: 700; color: #ef4444; letter-spacing: 0.5px; text-transform: uppercase; animation: lockPulse 1.5s ease-in-out infinite; }
+        @keyframes lockPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
+        .premium-lock-badge i { font-size: 9px; }
+        .channel-logo-container { width: 100%; aspect-ratio: 1/1; background: #fff; border-radius: 12px; padding: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .channel-logo-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .station-card.premium-node .channel-logo-container .premium-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; border-radius: 12px; opacity: 0; transition: opacity 0.3s ease; }
+        .station-card.premium-node:hover .channel-logo-container .premium-overlay { opacity: 1; }
+        .station-card.premium-node .channel-logo-container .premium-overlay i { color: rgba(245,158,11,0.3); font-size: 30px; }
+        .station-label { font-size: 10px; font-weight: 700; color: #9ca3af; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; text-transform: uppercase; }
+        .station-card.playing-node { border-color: var(--neon-cyan) !important; box-shadow: 0 0 30px rgba(6,182,212,0.25), inset 0 0 30px rgba(6,182,212,0.05); }
+        .station-card.playing-node .station-label { color: #fff !important; }
+
+        /* কাস্টম নেটিভ ভিডিও প্লেয়ার */
+        #mainStreamingCore { background: #000; border-radius: 16px; width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        /* বড় প্লে বাটন */
+        .big-play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan)); border: none; color: #fff; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 50px rgba(6,182,212,0.5); cursor: pointer; transition: transform 0.25s ease, box-shadow 0.25s ease; z-index: 6; }
+        .big-play-btn:hover { transform: translate(-50%,-50%) scale(1.08); box-shadow: 0 0 80px rgba(236,72,153,0.6); }
+        .big-play-btn.hidden { display: none !important; }
+
+        /* সাবটল বাফারিং চিপ — ভিডিও ব্লার/ডার্ক/পজড দেখাবে না, শুধু একটি ছোট ইঙ্গিত */
+        .buffer-chip { position: absolute; top: 12px; right: 12px; display: none; align-items: center; gap: 8px; background: rgba(3,7,18,0.72); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(6px); padding: 6px 12px 6px 8px; border-radius: 30px; z-index: 7; opacity: 0; transition: opacity 0.2s ease; }
+        .buffer-chip.show { display: flex; opacity: 1; }
+        .buffer-chip span { font-size: 10px; font-weight: 700; color: #e5e7eb; letter-spacing: 0.3px; }
+        .buffering-spinner-sm { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.15); border-top: 2.5px solid var(--neon-cyan); border-right: 2.5px solid var(--neon-pink); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* লাইভ ব্যাজ */
+        .live-badge { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 6px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 5px 10px; border-radius: 20px; z-index: 7; }
+        .live-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: lockPulse 1.5s ease-in-out infinite; }
+        .live-badge.hidden { display: none !important; }
+
+        /* কাস্টম কন্ট্রোল বার */
+        .custom-control-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%); opacity: 0; transition: opacity 0.25s ease; z-index: 8; }
+        #nativeVideoPlayerWrapper:hover .custom-control-bar,
+        #nativeVideoPlayerWrapper.show-controls .custom-control-bar { opacity: 1; }
+        .ctrl-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); border-radius: 30px; color: #fff; font-size: 13px; font-weight: 700; padding: 7px 12px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 4px; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .ctrl-btn:hover { background: rgba(255,255,255,0.16); transform: scale(1.05); }
+        .ctrl-time { font-size: 11px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .ctrl-spacer { flex: 1; }
+        .fs-label { font-size: 12px; font-weight: 600; }
+        @media (max-width: 600px) { .fs-label { display: none; } }
+        @media (min-width: 1024px) { .ctrl-btn { font-size: 15px; padding: 8px 16px; } .ctrl-time { font-size: 13px; } .big-play-btn { width: 100px; height: 100px; font-size: 32px; } }
+
+        /* লগইন, ইউজার, পপআপ, ব্যানার (আগের মতোই) */
+        .login-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(20px); z-index: 99999; display: none; align-items: center; justify-content: center; animation: fadeIn 0.4s ease; }
+        .login-modal-overlay.show { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .login-modal-box { max-width: 380px; width: 92%; background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05); border-radius: 28px; padding: 40px 28px 32px; text-align: center; animation: modalSlideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        @keyframes modalSlideUp { from { transform: translateY(40px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .login-modal-box .lock-icon { width: 72px; height: 72px; background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 30px; color: white; box-shadow: 0 0 50px rgba(6,182,212,0.2); }
+        .login-modal-box h2 { font-size: 20px; font-weight: 900; color: white; margin-bottom: 6px; }
+        .login-modal-box p { font-size: 13px; color: #9ca3af; margin-bottom: 24px; line-height: 1.5; }
+        .login-modal-box .btn-google { width: 100%; background: white; color: #1a1a2e; font-weight: 800; font-size: 14px; padding: 14px; border-radius: 30px; border: none; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(255,255,255,0.1); }
+        .login-modal-box .btn-google:hover { transform: scale(1.02); box-shadow: 0 6px 30px rgba(255,255,255,0.2); }
+        .login-modal-box .btn-cancel { margin-top: 12px; background: transparent; border: 1px solid rgba(255,255,255,0.08); color: #6b7280; font-weight: 600; font-size: 13px; padding: 10px; border-radius: 30px; width: 100%; cursor: pointer; transition: all 0.3s ease; }
+        .login-modal-box .btn-cancel:hover { background: rgba(255,255,255,0.05); color: #9ca3af; }
+
+        .user-profile-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 30px; padding: 4px 12px 4px 4px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .user-profile-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); }
+        .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px; }
+        .premium-user-tag { background: linear-gradient(135deg, var(--neon-gold), #d97706); color: white; font-size: 7px; font-weight: 900; padding: 2px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; animation: premiumTagPulse 1.5s ease-in-out infinite; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+        @keyframes premiumTagPulse { 0%,100% { opacity: 1; box-shadow: 0 0 20px rgba(245,158,11,0.3); } 50% { opacity: 0.8; box-shadow: 0 0 40px rgba(245,158,11,0.6); } }
+        .premium-site-badge { display: inline-block; background: linear-gradient(135deg, var(--neon-gold), #d97706); color: white; font-size: 9px; font-weight: 900; padding: 4px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; animation: premiumTagPulse 1.5s ease-in-out infinite; box-shadow: 0 0 30px rgba(245,158,11,0.3); margin-left: 8px; }
+
+        .celebration-popup { position: fixed; inset: 0; z-index: 999998; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); }
+        .celebration-popup.show { display: flex; }
+        .celebration-content { max-width: 400px; width: 90%; background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(245,158,11,0.2); border-radius: 28px; padding: 32px 24px; text-align: center; position: relative; overflow: hidden; animation: modalSlideUp 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+        .celebration-content .confetti-bg { position: absolute; inset: 0; opacity: 0.05; background: repeating-conic-gradient(from 0deg, #f59e0b 0deg 10deg, transparent 10deg 20deg); animation: confettiSpin 20s linear infinite; }
+        @keyframes confettiSpin { to { transform: rotate(360deg); } }
+        .celebration-icon { width: 80px; height: 80px; background: linear-gradient(135deg, var(--neon-gold), #d97706); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 36px; color: white; box-shadow: 0 0 60px rgba(245,158,11,0.3); position: relative; z-index: 2; }
+        .celebration-content h2 { font-size: 22px; font-weight: 900; color: var(--neon-gold); position: relative; z-index: 2; }
+        .celebration-content p { font-size: 13px; color: #9ca3af; margin-top: 8px; line-height: 1.6; position: relative; z-index: 2; }
+        .celebration-content .btn-gold { margin-top: 20px; background: linear-gradient(135deg, var(--neon-gold), #d97706); color: white; font-weight: 900; padding: 12px 40px; border-radius: 30px; border: none; font-size: 14px; cursor: pointer; transition: all 0.3s ease; position: relative; z-index: 2; }
+        .celebration-content .btn-gold:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(245,158,11,0.3); }
+        .expire-content { border-color: rgba(239,68,68,0.2) !important; }
+        .expire-content .celebration-icon { background: linear-gradient(135deg, #ef4444, #dc2626) !important; box-shadow: 0 0 60px rgba(239,68,68,0.3) !important; }
+        .expire-content h2 { color: #ef4444 !important; }
+
+        .glass-panel-card { background: rgba(11,15,25,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        .premium-lock-modal { background: rgba(0,0,0,0.88); backdrop-filter: blur(20px); }
+        .premium-lock-modal .gold-border { border: 1px solid rgba(245,158,11,0.2); }
+        .premium-glow-btn { background: linear-gradient(90deg, var(--neon-pink), #8b5cf6, var(--neon-cyan)); background-size: 200% auto; animation: gradientShine 3s linear infinite; }
+        @keyframes gradientShine { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+        .banner-wrapper { width: 100%; max-height: 140px; border-radius: 16px; overflow: hidden; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); position: relative; }
+        .banner-wrapper img { width: 100%; height: 100%; max-height: 140px; object-fit: contain; display: block; background: #0b0f19; }
+        .banner-wrapper a { display: block; width: 100%; height: 100%; }
+
+        @media (max-width: 767px) { .station-card { min-width: 80px; max-width: 80px; padding: 6px; } .station-card .station-label { font-size: 8px; } .channel-logo-container { padding: 2px; } .category-pill { font-size: 10px; padding: 4px 12px; } .banner-wrapper { max-height: 100px; } .banner-wrapper img { max-height: 100px; } .premium-badge { font-size: 6px; padding: 2px 6px; top: -6px; right: -6px; } .stations-horizontal-scroller { gap: 8px; padding: 4px 4px; } }
+        @media (min-width: 768px) { .station-card { min-width: 130px; max-width: 130px; padding: 12px; } .station-card .station-label { font-size: 11px; } .category-pill { font-size: 13px; padding: 8px 20px; } .premium-badge { font-size: 8px; padding: 4px 14px; } .channel-logo-container { border-radius: 16px; padding: 6px; } .stations-horizontal-scroller { gap: 16px; } .banner-wrapper { max-height: 160px; } .banner-wrapper img { max-height: 160px; } }
+        @media (min-width: 1024px) { .station-card { min-width: 160px; max-width: 160px; padding: 14px; border-radius: 18px; } .station-card .station-label { font-size: 13px; margin-top: 8px; } .category-pill { font-size: 14px; padding: 10px 24px; border-radius: 40px; } .premium-badge { font-size: 9px; padding: 5px 16px; top: -10px; right: -10px; } .channel-logo-container { border-radius: 18px; padding: 8px; } .stations-horizontal-scroller { gap: 20px; padding: 8px 12px; } .banner-wrapper { max-height: 180px; } .banner-wrapper img { max-height: 180px; } }
+        @media (min-width: 1600px) { .station-card { min-width: 200px; max-width: 200px; padding: 18px; } .station-card .station-label { font-size: 15px; } .category-pill { font-size: 16px; padding: 12px 30px; } .stations-horizontal-scroller { gap: 24px; } .banner-wrapper { max-height: 220px; } .banner-wrapper img { max-height: 220px; } }
+        * { scrollbar-color: rgba(255,255,255,0.12) transparent; scrollbar-width: thin; }
+    </style>
+</head>
+<body class="text-slate-200 bg-slate-950">
+
+    <!-- স্প্ল্যাশ স্ক্রিন -->
+    <div id="appSplashScreen">
+        <div class="splash-container">
+            <div class="splash-logo-wrapper">
+                <div class="logo-ring"></div>
+                <div class="logo-ring"></div>
+                <div class="splash-logo-inner">
+                    <i class="fa-solid fa-play"></i>
+                </div>
+            </div>
+            <h1 class="splash-title">Toffee<span>Plus</span></h1>
+            <div class="splash-loader-bar">
+                <div class="progress" id="splashProgress"></div>
+            </div>
+            <div class="splash-version">✦ PREMIUM ENGINE v6.0 ✦</div>
+        </div>
+    </div>
+
+    <!-- লগইন মোডাল -->
+    <div id="loginModal" class="login-modal-overlay">
+        <div class="login-modal-box">
+            <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
+            <h2>🔒 লগইন প্রয়োজন</h2>
+            <p>প্রিমিয়াম চ্যানেল দেখতে <strong>ToffeePlus</strong> অ্যাকাউন্টে লগইন করুন।</p>
+            <button onclick="handleGoogleLogin()" class="btn-google">
+                <svg width="22" height="22" viewBox="0 0 48 48">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+                </svg>
+                <span>সাইন ইন উইথ গুগল</span>
+            </button>
+            <button onclick="closeLoginModal()" class="btn-cancel">
+                <i class="fa-solid fa-xmark mr-2"></i> বন্ধ করুন
+            </button>
+        </div>
+    </div>
+
+    <!-- সেলিব্রেশন পপআপ -->
+    <div id="celebrationPopup" class="celebration-popup">
+        <div class="celebration-content">
+            <div class="confetti-bg"></div>
+            <div class="celebration-icon"><i class="fa-solid fa-crown"></i></div>
+            <h2>🎊 স্বাগতম!</h2>
+            <p id="celebrationMessage">আপনি <strong>ToffeePlus প্রিমিয়াম</strong> পেয়েছেন!</p>
+            <button class="btn-gold" onclick="closeCelebrationPopup()">
+                <i class="fa-solid fa-rocket mr-2"></i> চলুন শুরু করি!
+            </button>
+        </div>
+    </div>
+
+    <!-- এক্সপায়ার পপআপ -->
+    <div id="expirePopup" class="celebration-popup">
+        <div class="celebration-content expire-content">
+            <div class="confetti-bg"></div>
+            <div class="celebration-icon"><i class="fa-solid fa-clock"></i></div>
+            <h2>⏰ মেয়াদ শেষ!</h2>
+            <p id="expireMessage">আপনার প্রিমিয়াম অ্যাক্সেস শেষ হয়েছে। পুনরায় যোগাযোগ করুন!</p>
+            <button class="btn-gold" onclick="closeExpirePopup()">
+                <i class="fa-solid fa-xmark mr-2"></i> বুঝেছি
+            </button>
+        </div>
+    </div>
+
+    <!-- হেডার -->
+    <header class="border-b border-white/5 bg-slate-950/60 backdrop-blur-md px-3 py-3 shrink-0 z-40">
+        <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-2">
+            <div class="flex items-center space-x-2 shrink-0">
+                <div class="w-8 h-8 bg-gradient-to-tr from-cyan-500 to-pink-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                    <i class="fa-solid fa-play text-white text-xs ml-0.5"></i>
+                </div>
+                <h1 class="text-base font-black text-white tracking-wider uppercase font-mono flex items-center">
+                    Toffee<span class="text-cyan-400">Plus</span>
+                    <span id="premiumSiteBadge" class="premium-site-badge hidden">
+                        <i class="fa-solid fa-crown mr-1"></i> প্রিমিয়াম
+                    </span>
+                </h1>
+            </div>
+            <div id="userProfileSection" class="shrink-0 ml-auto">
+                <button onclick="showLoginModal()" id="authButton" class="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-3 py-2 rounded-xl border border-cyan-500/20 hover:bg-cyan-500/20 transition-all">
+                    <i class="fa-solid fa-user mr-1.5"></i> লগইন
+                </button>
+                <div id="userProfileDropdown" class="hidden user-profile-btn" onclick="toggleUserMenu()">
+                    <div class="user-avatar" id="userAvatarText">U</div>
+                    <span class="text-xs font-semibold text-white truncate max-w-[60px]" id="userDisplayName">User</span>
+                    <span class="premium-user-tag hidden" id="premiumUserTag">✨ প্রিমিয়াম</span>
+                    <i class="fa-solid fa-chevron-down text-slate-500 text-[10px]"></i>
+                </div>
+            </div>
+        </div>
+              </header>
+              <!-- ইউজার মেনু -->
+<div id="userMenuDropdown" class="hidden fixed right-4 top-16 z-50 w-56 bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-modal">
+    <div class="p-4 border-b border-white/5">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm" id="menuUserAvatar">U</div>
+            <div>
+                <p class="text-sm font-bold text-white" id="menuUserName">User</p>
+                <p class="text-[10px] text-slate-400 truncate" id="menuUserEmail">user@email.com</p>
+            </div>
+        </div>
+        <div class="mt-2 flex items-center gap-2">
+            <span class="text-[9px] text-slate-500">স্ট্যাটাস:</span>
+            <span id="menuUserStatus" class="text-[9px] font-bold text-red-400">🆓 ফ্রি</span>
+        </div>
+        <div id="premiumStatusBadge" class="mt-1 hidden">
+            <span class="text-[8px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">
+                <i class="fa-solid fa-crown mr-0.5"></i> প্রিমিয়াম অ্যাক্টিভ
+            </span>
+        </div>
+    </div>
+    <div class="p-2">
+        <button onclick="handleLogout()" class="w-full text-left text-xs font-semibold text-red-400 hover:bg-red-500/10 px-3 py-2 rounded-xl transition-all">
+            <i class="fa-solid fa-right-from-bracket mr-2"></i> লগআউট
+        </button>
+    </div>
+</div>
+
+<!-- টিকার নোটিস -->
+<div id="tickerNoticeBar" class="hidden bg-cyan-950/40 border-b border-cyan-500/10 text-cyan-400 px-4 py-1.5 text-[11px] font-medium shrink-0 overflow-hidden">
+    <div class="max-w-[1200px] mx-auto flex items-center gap-3">
+        <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wide shrink-0 flex items-center gap-1">
+            <i class="fa-solid fa-bullhorn"></i> নোটিশ
+        </span>
+        <marquee id="tickerText" scrollamount="4" class="w-full"></marquee>
+    </div>
+</div>
+
+<!-- প্রিমিয়াম লক মোডাল -->
+<div id="premiumLockModal" class="hidden fixed inset-0 z-[99999] premium-lock-modal flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-slate-900 border gold-border rounded-3xl p-6 shadow-2xl animate-modal text-center space-y-4">
+        <div class="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
+            <i class="fa-solid fa-crown text-white text-2xl"></i>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-lg font-black text-amber-400 uppercase tracking-wide">🔒 প্রিমিয়াম কন্টেন্ট</h3>
+            <div class="h-px w-16 bg-gradient-to-r from-transparent via-amber-500 to-transparent mx-auto"></div>
+            <p class="text-xs text-slate-300 leading-relaxed" id="premiumLockMessage">
+                সাবস্ক্রাইব করুন মাত্র <span class="text-amber-400 font-bold" id="premiumPriceDisplay">৯৯ টাকা</span>/মাস!
+            </p>
+        </div>
+        <div class="space-y-2.5 pt-2">
+            <a id="premiumContactButton" href="#" target="_blank" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-xl text-sm uppercase tracking-wider transition-all hover:scale-[1.02]">
+                <i class="fa-brands fa-whatsapp text-lg"></i> যোগাযোগ করুন
+            </a>
+            <button onclick="closePremiumLockModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all">
+                <i class="fa-solid fa-xmark mr-1.5"></i> বন্ধ করুন
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- টাস্ক এড গেট -->
+<div id="forcedTaskAdGate" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-xl z-[99998] flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-slate-900 border border-white/5 rounded-3xl p-5 shadow-2xl space-y-5 text-center">
+        <div id="adGateInitialView" class="space-y-4">
+            <div class="w-14 h-14 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 text-xl animate-bounce">
+                <i class="fa-solid fa-unlock-keyhole"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-sm font-black text-white uppercase tracking-wide">Unlock Premium Stream</h3>
+                <p class="text-[11px] text-slate-400 px-2 leading-relaxed">নিচের বাটনে ক্লিক করুন ও ১২ সেকেন্ড অপেক্ষা করুন।</p>
+            </div>
+            <button onclick="startInlineIframeAdEngine()" class="w-full premium-glow-btn text-white font-black py-3 rounded-xl text-xs uppercase tracking-widest transition-all shadow-md">
+                <i class="fa-solid fa-bolt mr-1.5"></i> Click to Unlock
+            </button>
+        </div>
+        <div id="adGateActiveStreamingView" class="hidden space-y-4">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-spinner animate-spin text-cyan-400"></i> Verifying...
+                </span>
+                <div class="bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-0.5 rounded-full text-cyan-400 font-mono text-xs font-black">
+                    <span id="countdownClockDisplay">12</span>s
+                </div>
+            </div>
+            <div class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div id="countdownProgressBar" class="h-full bg-gradient-to-r from-cyan-500 to-pink-500 transition-all duration-1000" style="width: 100%;"></div>
+            </div>
+            <div class="w-full aspect-video bg-black rounded-xl overflow-hidden border border-white/5 shadow-inner relative">
+                <iframe id="inlineAdGateSandboxFrame" src="" class="w-full h-full object-cover"></iframe>
+            </div>
+            <p class="text-[9px] text-slate-500 italic">⚠️ বিজ্ঞাপন স্কিপ করবেন না।</p>
+        </div>
+    </div>
+</div>
+<!-- মেইন কন্টেন্ট -->
+<main class="flex-grow flex flex-col max-w-[1200px] w-full mx-auto px-3 py-2 overflow-visible gap-3">
+    
+    <!-- ভিডিও প্লেয়ার -->
+    <div class="w-full aspect-video bg-black rounded-2xl overflow-hidden shadow-[0_15px_50px_rgba(0,0,0,0.8)] border border-white/5 relative shrink-0" id="playerWrapper">
+        <div id="nativeVideoPlayerWrapper" class="w-full h-full relative">
+            <video id="mainStreamingCore" preload="auto" playsinline webkit-playsinline="true"></video>
+
+            <!-- বড় প্লে বাটন (শুরুতে/পজ অবস্থায়) -->
+            <button id="bigPlayButton" class="big-play-btn hidden" aria-label="Play">
+                <i class="fa-solid fa-play"></i>
+            </button>
+
+            <!-- সাবটল বাফারিং চিপ — ভিডিও ব্লার/পজড দেখাবে না, শুধু ছোট ইঙ্গিত দেখাবে -->
+            <div id="playerLoadingOverlay" class="buffer-chip">
+                <div class="buffering-spinner-sm"></div>
+                <span>লোড হচ্ছে</span>
+            </div>
+
+            <!-- লাইভ ব্যাজ -->
+            <div id="liveBadge" class="live-badge hidden"><span class="dot"></span> LIVE</div>
+
+            <!-- কাস্টম কন্ট্রোল বার -->
+            <div id="customControlBar" class="custom-control-bar">
+                <button id="ctrlPlayPause" class="ctrl-btn" aria-label="Play/Pause"><i class="fa-solid fa-play"></i></button>
+                <button id="ctrlSkipBack" class="ctrl-btn"><i class="fa-solid fa-backward-step"></i> 10</button>
+                <button id="ctrlSkipFwd" class="ctrl-btn">10 <i class="fa-solid fa-forward-step"></i></button>
+                <span id="ctrlTime" class="ctrl-time">লাইভ</span>
+                <div class="ctrl-spacer"></div>
+                <button id="ctrlMute" class="ctrl-btn" aria-label="Mute"><i class="fa-solid fa-volume-high"></i></button>
+                <button id="ctrlFullscreen" class="ctrl-btn" aria-label="Fullscreen"><i class="fa-solid fa-expand"></i> <span class="fs-label">পূর্ণ স্ক্রিন</span></button>
+            </div>
+        </div>
+        <div id="embeddedSandboxWrapper" class="w-full h-full hidden embedded-sandbox-matrix bg-slate-950"></div>
+    </div>
+
+    <!-- ক্যাটাগরি -->
+    <div class="w-full shrink-0 space-y-1">
+        <span class="text-[9px] font-black text-slate-500 font-mono tracking-widest uppercase flex items-center gap-2">
+            <i class="fa-solid fa-folder-tree text-cyan-400"></i> ক্যাটাগরি
+        </span>
+        <div id="appCategoriesFilterGrid" class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 whitespace-nowrap px-1">
+            <span class="text-xs text-slate-600 italic">লোড হচ্ছে...</span>
+        </div>
+    </div>
+
+    <!-- চ্যানেল লিস্ট -->
+    <div class="w-full bg-slate-900/40 border border-white/5 p-3 rounded-2xl backdrop-blur-sm shrink-0 overflow-hidden">
+        <div class="flex items-center justify-between border-b border-white/5 pb-1 mb-1.5">
+            <span class="text-[10px] font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping"></span> লাইভ স্টেশন
+            </span>
+            <span id="renderedCountLabel" class="text-[9px] font-mono text-cyan-400 font-bold bg-cyan-500/10 px-2 py-0.5 rounded-full">০টি</span>
+        </div>
+        <div id="appChannelsScrollerContainer" class="stations-horizontal-scroller custom-scrollbar w-full py-0.5">
+            <div class="text-center py-2 text-slate-600 italic text-xs w-full">সংযোগ স্থাপন...</div>
+        </div>
+    </div>
+
+    <!-- প্লেয়ার সাব-নোটিস -->
+    <div id="playerSubNoticeBox" class="hidden bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl px-4 py-2 text-[11px] font-semibold flex items-center gap-2.5 shrink-0">
+        <i class="fa-solid fa-triangle-exclamation text-xs shrink-0"></i>
+        <p id="playerSubNoticeText" class="truncate leading-none"></p>
+    </div>
+
+    <!-- ব্যানার -->
+    <div class="w-full py-1">
+        <div id="adminBannerContainer" class="banner-wrapper hidden">
+            <a id="adminBannerAnchor" href="#" target="_blank">
+                <img id="adminBannerImage" src="" alt="বিজ্ঞাপন">
+            </a>
+        </div>
+    </div>
+</main>
+
+<!-- পুশ নোটিফিকেশন -->
+<div id="pushNotificationBox" class="fixed top-4 left-4 right-4 z-[9999] hidden animate-bounce">
+    <div class="glass-panel-card p-4 rounded-2xl border border-cyan-500/30 flex items-center gap-4">
+        <img id="notifImg" src="" class="w-12 h-12 rounded-xl object-cover">
+        <div class="flex-1">
+            <h4 id="notifTitle" class="text-white font-bold text-sm"></h4>
+            <p id="notifDesc" class="text-slate-400 text-xs"></p>
+        </div>
+        <button onclick="document.getElementById('pushNotificationBox').classList.add('hidden')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+</div>
+<script>
+    // =============================================
+    // 📌 Firebase Config
+    // =============================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyB6j-1q2sKOfTE6TYhNWoHv2jouPuHjCIo",
+        authDomain: "toffeeplus-wc2026.firebaseapp.com",
+        databaseURL: "https://toffeeplus-wc2026-default-rtdb.firebaseio.com",
+        projectId: "toffeeplus-wc2026",
+        storageBucket: "toffeeplus-wc2026.firebasestorage.app",
+        messagingSenderId: "571762163240",
+        appId: "1:571762163240:web:2041f98df771db2c6fff1d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // =============================================
+    // 📌 গ্লোবাল ভেরিয়েবল
+    // =============================================
+    let currentUser = null;
+    let isPremiumUser = false;
+    let wasPremiumUser = false;
+    let premiumUsersList = {};
+    let premiumChannelsList = {};
+    let premiumCategoriesList = {};
+    let settingsData = {};
+    let masterCategories = {};
+    let masterChannels = {};
+    let selectedCategoryKey = null;
+    let activePlayingChannelKey = null;
+    let globalAdConfig = { url: "", status: false };
+    let globalTaskAdConfig = { url: "", status: false };
+    let hlsInstance = null;
+    let pendingChannelToPlay = null;
+    let celebrationShown = false;
+    let pendingLoginChannel = null;
+    let videoElement = null;
+
+    // =============================================
+    // 📌 লগইন
+    // =============================================
+    window.showLoginModal = function(channelKey) {
+        if (channelKey) pendingLoginChannel = channelKey;
+        document.getElementById('loginModal').classList.add('show');
+    };
+    window.closeLoginModal = function() {
+        document.getElementById('loginModal').classList.remove('show');
+        pendingLoginChannel = null;
+    };
+    window.handleGoogleLogin = function() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider)
+            .then(() => {
+                closeLoginModal();
+                if (pendingLoginChannel) {
+                    const chKey = pendingLoginChannel;
+                    pendingLoginChannel = null;
+                    setTimeout(() => processChannelRouteGate(chKey), 500);
+                }
+            })
+            .catch(err => alert('লগইন ব্যর্থ: ' + err.message));
+    };
+
+    // =============================================
+    // 📌 অথেন্টিকেশন
+    // =============================================
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            currentUser = user;
+            updateUserUI(user);
+            checkPremiumStatus(user.email);
+        } else {
+            currentUser = null;
+            isPremiumUser = false;
+            document.getElementById('authButton').classList.remove('hidden');
+            document.getElementById('userProfileDropdown').classList.add('hidden');
+            document.getElementById('userMenuDropdown').classList.add('hidden');
+            document.getElementById('premiumSiteBadge').classList.add('hidden');
+        }
+    });
+
+    function checkPremiumStatus(email) {
+        if (!email) return;
+        const emailKey = email.replace(/[.#$\/\[\]]/g, '_');
+        const userRef = db.ref('premiumUsers/' + emailKey);
+        userRef.on('value', snap => {
+            const exists = snap.exists();
+            if (exists) {
+                isPremiumUser = true;
+                wasPremiumUser = true;
+                document.getElementById('premiumUserTag').classList.remove('hidden');
+                document.getElementById('premiumSiteBadge').classList.remove('hidden');
+                document.getElementById('menuUserStatus').textContent = '🌟 প্রিমিয়াম ইউজার';
+                document.getElementById('menuUserStatus').className = 'text-[9px] font-bold text-amber-400';
+                document.getElementById('premiumStatusBadge').classList.remove('hidden');
+                if (!celebrationShown) {
+                    showCelebrationPopup();
+                    celebrationShown = true;
+                    sessionStorage.setItem('celebrationShown_' + emailKey, 'true');
+                }
+            } else {
+                isPremiumUser = false;
+                document.getElementById('premiumUserTag').classList.add('hidden');
+                document.getElementById('premiumSiteBadge').classList.add('hidden');
+                document.getElementById('menuUserStatus').textContent = '🆓 ফ্রি ইউজার';
+                document.getElementById('menuUserStatus').className = 'text-[9px] font-bold text-red-400';
+                document.getElementById('premiumStatusBadge').classList.add('hidden');
+                if (wasPremiumUser) {
+                    const expireKey = 'expireShown_' + emailKey;
+                    if (!sessionStorage.getItem(expireKey)) {
+                        showExpirePopup();
+                        sessionStorage.setItem(expireKey, 'true');
+                    }
+                    wasPremiumUser = false;
+                    celebrationShown = false;
+                }
+            }
+            renderChannelsViewHub();
+        });
+    }
+
+    function updateUserUI(user) {
+        const displayName = user.displayName || user.email || 'User';
+        const initial = displayName.charAt(0).toUpperCase();
+        document.getElementById('authButton').classList.add('hidden');
+        document.getElementById('userProfileDropdown').classList.remove('hidden');
+        document.getElementById('userAvatarText').textContent = initial;
+        document.getElementById('userDisplayName').textContent = displayName;
+        document.getElementById('menuUserAvatar').textContent = initial;
+        document.getElementById('menuUserName').textContent = displayName;
+        document.getElementById('menuUserEmail').textContent = user.email;
+    }
+
+    window.toggleUserMenu = function() {
+        document.getElementById('userMenuDropdown').classList.toggle('hidden');
+    };
+    window.handleLogout = function() {
+        auth.signOut().then(() => {
+            document.getElementById('userMenuDropdown').classList.add('hidden');
+            isPremiumUser = false;
+            wasPremiumUser = false;
+            celebrationShown = false;
+            document.getElementById('premiumSiteBadge').classList.add('hidden');
+            stopPlayback();
+        });
+    };
+
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('userMenuDropdown');
+        const profile = document.getElementById('userProfileDropdown');
+        if (menu && !menu.classList.contains('hidden')) {
+            if (!profile.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        }
+    });
+
+    // ===== পপআপ =====
+    window.showCelebrationPopup = function() {
+        document.getElementById('celebrationPopup').classList.add('show');
+    };
+    window.closeCelebrationPopup = function() {
+        document.getElementById('celebrationPopup').classList.remove('show');
+    };
+    window.showExpirePopup = function() {
+        document.getElementById('expirePopup').classList.add('show');
+    };
+    window.closeExpirePopup = function() {
+        document.getElementById('expirePopup').classList.remove('show');
+    };
+  // ===== প্রিমিয়াম লিস্ট =====
+db.ref('premiumChannels').on('value', snap => {
+    premiumChannelsList = snap.val() || {};
+    renderChannelsViewHub();
+    console.log('✅ premiumChannels loaded:', Object.keys(premiumChannelsList).length);
+});
+db.ref('premiumCategories').on('value', snap => {
+    premiumCategoriesList = snap.val() || {};
+    renderCategories();
+    console.log('✅ premiumCategories loaded:', Object.keys(premiumCategoriesList).length);
+});
+db.ref('settings').on('value', snap => {
+    settingsData = snap.val() || {};
+    document.getElementById('premiumPriceDisplay').textContent = settingsData.premiumPrice || '৯৯ টাকা';
+    document.getElementById('premiumContactButton').href = settingsData.contactWhatsApp || '#';
+    document.getElementById('premiumLockMessage').innerHTML = 
+        `সাবস্ক্রাইব করুন মাত্র <span class="text-amber-400 font-bold">${settingsData.premiumPrice || '৯৯ টাকা'}</span>/মাস!`;
+});
+
+window.showPremiumLockModal = function(channelKey) {
+    pendingChannelToPlay = channelKey;
+    document.getElementById('premiumLockModal').classList.remove('hidden');
+};
+window.closePremiumLockModal = function() {
+    document.getElementById('premiumLockModal').classList.add('hidden');
+    pendingChannelToPlay = null;
+};
+
+// ===== ক্যাটাগরি রেন্ডার =====
+function renderCategories() {
+    const container = document.getElementById('appCategoriesFilterGrid');
+    if (!container) return;
+    let html = "";
+    const keys = Object.keys(masterCategories);
+    if (keys.length > 0) {
+        if (!selectedCategoryKey || !masterCategories[selectedCategoryKey]) {
+            selectedCategoryKey = keys[0];
+        }
+        keys.forEach(key => {
+            const isActive = (key === selectedCategoryKey) ? "active" : "";
+            const isPremium = premiumCategoriesList[key] ? "premium-pill" : "";
+            html += `<button onclick="switchCategoryFilter('${key}')" id="pill_${key}" class="category-pill ${isActive} ${isPremium}">${masterCategories[key].name}</button>`;
+        });
+    } else {
+        html = `<span class="text-xs text-slate-600 italic">কোন ক্যাটাগরি নেই</span>`;
+    }
+    container.innerHTML = html;
+    renderChannelsViewHub();
+}
+
+// ===== চ্যানেল রেন্ডার =====
+function renderChannelsViewHub() {
+    const container = document.getElementById('appChannelsScrollerContainer');
+    const countLabel = document.getElementById('renderedCountLabel');
+    if (!container) return;
+    let html = "";
+    let matchCount = 0;
+    Object.keys(masterChannels).forEach(key => {
+        const ch = masterChannels[key];
+        if (ch.categoryId !== selectedCategoryKey) return;
+        matchCount++;
+        const isPlaying = (key === activePlayingChannelKey) ? "playing-node" : "";
+        const isPremium = premiumChannelsList[key] ? "premium-node premium-glow" : "";
+        const hideBadge = isPremiumUser ? "hide-premium-badge" : "";
+        const premiumBadge = (premiumChannelsList[key] && !isPremiumUser) ? 
+            `<span class="premium-badge"><i class="fa-solid fa-crown"></i> প্রিমিয়াম</span>` : '';
+        const lockBadge = (premiumChannelsList[key] && !isPremiumUser) ? 
+            `<div class="premium-lock-badge"><i class="fa-solid fa-lock"></i> লকড</div>` : '';
+        const premiumOverlay = premiumChannelsList[key] ? 
+            `<div class="premium-overlay"><i class="fa-solid fa-crown"></i></div>` : '';
+        html += `
+            <div onclick="processChannelRouteGate('${key}')" class="station-card ${isPlaying} ${isPremium} ${hideBadge}" id="card_${key}">
+                ${premiumBadge}
+                <div class="channel-logo-container">
+                    <img src="${ch.logo || 'https://placehold.co/120x120/ffffff/000000?text=NO+LOGO'}" alt="${ch.name}" loading="lazy">
+                    ${premiumOverlay}
+                </div>
+                <div class="station-label">${ch.name}</div>
+                ${lockBadge}
+            </div>
+        `;
+    });
+    countLabel.innerText = `${matchCount}টি নোড`;
+    container.innerHTML = html || `<div class="text-center py-3 text-slate-500 italic text-xs w-full">কোন চ্যানেল নেই</div>`;
+}
+
+window.switchCategoryFilter = function(categoryKey) {
+    selectedCategoryKey = categoryKey;
+    document.querySelectorAll('.category-pill').forEach(btn => btn.classList.remove('active'));
+    const activePill = document.getElementById(`pill_${categoryKey}`);
+    if (activePill) activePill.classList.add('active');
+    renderChannelsViewHub();
+};
+
+window.processChannelRouteGate = function(channelKey) {
+    const ch = masterChannels[channelKey];
+    if (!ch) return;
+    if (premiumChannelsList[channelKey]) {
+        if (!currentUser) { showLoginModal(channelKey); return; }
+        if (!isPremiumUser) { showPremiumLockModal(channelKey); return; }
+    }
+    if (globalTaskAdConfig && globalTaskAdConfig.status && globalTaskAdConfig.url) {
+        const gateCompleted = localStorage.getItem(`task_gate_v5_${channelKey}`);
+        const timestamp = localStorage.getItem(`task_time_v5_${channelKey}`);
+        const twelveHours = 12 * 60 * 60 * 1000;
+        if (!gateCompleted || !timestamp || (Date.now() - timestamp > twelveHours)) {
+            triggerAdGateLockOverlay(channelKey);
+            return;
+        }
+    }
+    if (globalAdConfig && globalAdConfig.status && globalAdConfig.url) {
+        window.open(globalAdConfig.url, '_blank');
+    }
+    executeStreamingPlayback(channelKey);
+};
+ // =============================================
+// 🎬 কাস্টম নেটিভ HLS.js প্লেয়ার
+// =============================================
+function executeStreamingPlayback(channelKey) {
+    const ch = masterChannels[channelKey];
+    if (!ch) return;
+
+    activePlayingChannelKey = channelKey;
+    document.querySelectorAll('.station-card').forEach(card => card.classList.remove('playing-node'));
+    const activeCard = document.getElementById(`card_${channelKey}`);
+    if (activeCard) activeCard.classList.add('playing-node');
+
+    const isIframe = (ch.url && (ch.url.includes("<iframe") || ch.url.includes("</iframe>")));
+    const nativeWrapper = document.getElementById('nativeVideoPlayerWrapper');
+    const embedWrapper = document.getElementById('embeddedSandboxWrapper');
+
+    if (isIframe) {
+        stopPlayback();
+        nativeWrapper.classList.add('hidden');
+        embedWrapper.classList.remove('hidden');
+        embedWrapper.innerHTML = ch.url;
+        return;
+    } else {
+        embedWrapper.classList.add('hidden');
+        embedWrapper.innerHTML = "";
+        nativeWrapper.classList.remove('hidden');
+    }
+
+    videoElement = document.getElementById('mainStreamingCore');
+    if (!videoElement) return;
+
+    loadStream(ch.url);
+}
+
+// ===== প্লেব্যাক সম্পূর্ণ বন্ধ (লগআউট/আইফ্রেম-এ যাওয়ার সময়) =====
+function stopPlayback() {
+    clearSmartBufferTimers();
+    if (hlsInstance) {
+        try { hlsInstance.destroy(); } catch (e) {}
+        hlsInstance = null;
+    }
+    if (videoElement) {
+        try { videoElement.pause(); videoElement.removeAttribute('src'); videoElement.load(); } catch (e) {}
+    }
+    showPlayerLoading(false);
+}
+
+// =============================================
+// 🚀 স্ট্রিম লোড — hls.js (দ্রুত, হালকা, স্মার্ট ABR ও অটো-রিকভারি সহ)
+// =============================================
+function loadStream(url) {
+    smartBufferState.currentUrl = url;
+    smartBufferState.recoveryAttempts = 0;
+    clearSmartBufferTimers();
+
+    if (hlsInstance) {
+        try { hlsInstance.destroy(); } catch (e) {}
+        hlsInstance = null;
+    }
+
+    const isMp4 = url.includes('.mp4');
+
+    if (isMp4) {
+        videoElement.src = url;
+        videoElement.play().catch(err => console.log("Autoplay blocked:", err));
+        return;
+    }
+
+    if (window.Hls && Hls.isSupported()) {
+        hlsInstance = new Hls({
+            // 🔥 টিউনড বাফার — খুব বড় বাফার নয় (স্লো স্টার্ট এড়াতে), আবার খুব ছোটও না (রিবাফারিং এড়াতে)
+            maxBufferLength: 30,           // সাধারণ অবস্থায় ~৩০ সেকেন্ড বাফার রাখার চেষ্টা
+            maxMaxBufferLength: 60,        // ভালো নেটওয়ার্কে সর্বোচ্চ ৬০ সেকেন্ড পর্যন্ত
+            backBufferLength: 30,          // পুরনো বাফার বেশি রাখবে না — মেমোরি/পারফরম্যান্স ভালো থাকে
+            liveSyncDurationCount: 3,      // লাইভ প্রান্ত থেকে ~৩ সেগমেন্ট পেছনে থাকবে
+            liveMaxLatencyDurationCount: 8,
+            maxLiveSyncPlaybackRate: 1.1,  // পিছিয়ে গেলে সামান্য স্পিড বাড়িয়ে লাইভে ধরবে (হার্ড জাম্প এড়িয়ে)
+            enableWorker: true,            // মেইন থ্রেড ব্লক না করে ওয়েব ওয়ার্কারে পার্স/ডিমাক্স হবে (স্মুথনেস বাড়ে)
+            lowLatencyMode: false,
+            capLevelToPlayerSize: true,    // প্লেয়ারের প্রকৃত সাইজ অনুযায়ী কোয়ালিটি বাছবে — অহেতুক বেশি বিটরেট বাফার করবে না
+            abrEwmaFastLive: 3.0,
+            abrEwmaSlowLive: 9.0,
+            abrBandWidthFactor: 0.9,
+            abrBandWidthUpFactor: 0.7,
+            fragLoadingMaxRetry: 6,
+            manifestLoadingMaxRetry: 4,
+            levelLoadingMaxRetry: 4,
+        });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(videoElement);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            videoElement.play().catch(err => console.log("Autoplay blocked:", err));
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+            if (!data.fatal) return;
+            console.log('⚠️ HLS ত্রুটি:', data.type);
+            if (smartBufferState.recoveryAttempts >= MAX_RECOVERY_ATTEMPTS) return;
+            smartBufferState.recoveryAttempts++;
+            switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                    hlsInstance.startLoad();
+                    break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                    hlsInstance.recoverMediaError();
+                    break;
+                default:
+                    loadStream(url);
+                    break;
+            }
+        });
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari-তে নেটিভ HLS সাপোর্ট আছে
+        videoElement.src = url;
+        videoElement.addEventListener('loadedmetadata', () => {
+            videoElement.play().catch(err => console.log("Autoplay blocked:", err));
+        }, { once: true });
+    } else {
+        console.log('❌ এই ব্রাউজারে HLS প্লেব্যাক সাপোর্ট নেই');
+    }
+}
+
+// =============================================
+// 🧠 স্মার্ট বাফারিং হ্যান্ডলার (একবারই যুক্ত হয়, নেটিভ ভিডিও ইভেন্ট ব্যবহার করে)
+// - সাবটল চিপ দেখায়, ভিডিও ব্লার/ডার্ক/পজড দেখায় না
+// - সংক্ষিপ্ত/মুহূর্তের স্টল-এ কিছু দেখায় না (ফ্লিকার বন্ধ)
+// - বাফারিং শেষে প্লেব্যাক লিভ-এজে সিঙ্ক করে যাতে "লাফ/লেক" অনুভূত না হয়
+// - দীর্ঘ সময় আটকে থাকলে স্ট্রিম স্বয়ংক্রিয়ভাবে রিকভার করে
+// =============================================
+const smartBufferState = {
+    currentUrl: null,
+    attached: false,
+    showOverlayTimer: null,
+    stallWatchdogTimer: null,
+    recoveryAttempts: 0,
+};
+const SHOW_DELAY_MS = 400;      // এত দ্রুত স্টল হলে চিপ দেখানোর দরকার নেই
+const STALL_TIMEOUT_MS = 10000; // এত দীর্ঘ সময় আটকে থাকলে স্ট্রিম রিফ্রেশ করবে
+const MAX_RECOVERY_ATTEMPTS = 4;
+
+function clearSmartBufferTimers() {
+    clearTimeout(smartBufferState.showOverlayTimer);
+    clearTimeout(smartBufferState.stallWatchdogTimer);
+    smartBufferState.showOverlayTimer = null;
+    smartBufferState.stallWatchdogTimer = null;
+}
+
+function attachSmartBufferingHandlers() {
+    if (smartBufferState.attached) return; // একবারই যুক্ত হবে, ডুপ্লিকেট লিসেনার এড়াতে
+    smartBufferState.attached = true;
+    const v = videoElement;
+
+    function onWaiting() {
+        if (v.paused) return; // ইউজার নিজে পজ করলে বাফারিং চিপ দেখানোর দরকার নেই
+        if (!smartBufferState.showOverlayTimer) {
+            smartBufferState.showOverlayTimer = setTimeout(() => showPlayerLoading(true), SHOW_DELAY_MS);
+        }
+        if (!smartBufferState.stallWatchdogTimer) {
+            smartBufferState.stallWatchdogTimer = setTimeout(attemptStallRecovery, STALL_TIMEOUT_MS);
+        }
+    }
+
+    function onRecovered() {
+        clearSmartBufferTimers();
+        showPlayerLoading(false);
+        smartBufferState.recoveryAttempts = 0;
+        syncToLiveEdgeIfNeeded();
+    }
+
+    v.addEventListener('waiting', onWaiting);
+    v.addEventListener('stalled', onWaiting);
+    v.addEventListener('canplay', onRecovered);
+    v.addEventListener('canplaythrough', onRecovered);
+    v.addEventListener('playing', onRecovered);
+    v.addEventListener('loadstart', () => { smartBufferState.recoveryAttempts = 0; clearSmartBufferTimers(); });
+}
+
+function attemptStallRecovery() {
+    if (smartBufferState.recoveryAttempts >= MAX_RECOVERY_ATTEMPTS) return;
+    smartBufferState.recoveryAttempts++;
+    const url = smartBufferState.currentUrl;
+    if (!url) return;
+    console.log(`⚠️ দীর্ঘ বাফারিং সনাক্ত, স্ট্রিম রিকভার করা হচ্ছে... (চেষ্টা ${smartBufferState.recoveryAttempts})`);
+    if (hlsInstance) {
+        hlsInstance.startLoad();
+    } else {
+        loadStream(url);
+    }
+    clearSmartBufferTimers();
+}
+
+// লাইভ-এজের কাছাকাছি সিঙ্ক করে "লেক/জাম্প" অনুভূতি কমায়
+function syncToLiveEdgeIfNeeded() {
+    try {
+        const v = videoElement;
+        const seekable = v.seekable;
+        if (seekable && seekable.length > 0) {
+            const liveEdge = seekable.end(seekable.length - 1);
+            const behind = liveEdge - v.currentTime;
+            // অনেকটা পিছিয়ে পড়লে (বাফারিং-এর পর সাধারণ ঘটনা) লাইভের কাছাকাছি নিয়ে আসা হয়
+            if (behind > 25) {
+                v.currentTime = liveEdge - 6;
+            }
+        }
+    } catch (e) { /* সিক অসম্ভব হলে নীরবে উপেক্ষা */ }
+}
+
+// ===== বাফারিং চিপ কন্ট্রোল (সাবটল, ভিডিও ব্লার করে না) =====
+function showPlayerLoading(show) {
+    const overlay = document.getElementById('playerLoadingOverlay');
+    if (!overlay) return;
+    if (show) overlay.classList.add('show');
+    else overlay.classList.remove('show');
+}
+
+// =============================================
+// 🎛️ কাস্টম কন্ট্রোল বার (প্লে/পজ, স্কিপ, মিউট, ফুলস্ক্রিন, ট্যাপ-টু-শো)
+// =============================================
+function initCustomPlayerControls() {
+    videoElement = document.getElementById('mainStreamingCore');
+    const wrapper = document.getElementById('nativeVideoPlayerWrapper');
+    const bigPlayBtn = document.getElementById('bigPlayButton');
+    const ctrlPlayPause = document.getElementById('ctrlPlayPause');
+    const ctrlSkipBack = document.getElementById('ctrlSkipBack');
+    const ctrlSkipFwd = document.getElementById('ctrlSkipFwd');
+    const ctrlMute = document.getElementById('ctrlMute');
+    const ctrlFullscreen = document.getElementById('ctrlFullscreen');
+    const liveBadge = document.getElementById('liveBadge');
+    if (!videoElement || !wrapper) return;
+
+    attachSmartBufferingHandlers();
+
+    function updatePlayIcon() {
+        const icon = videoElement.paused ? 'fa-play' : 'fa-pause';
+        ctrlPlayPause.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+        bigPlayBtn.classList.toggle('hidden', !videoElement.paused || videoElement.seeking);
+    }
+
+    function togglePlayPause(e) {
+        if (e) e.stopPropagation();
+        if (videoElement.paused) videoElement.play().catch(() => {});
+        else videoElement.pause();
+    }
+
+    ctrlPlayPause.onclick = togglePlayPause;
+    bigPlayBtn.onclick = togglePlayPause;
+    videoElement.addEventListener('play', updatePlayIcon);
+    videoElement.addEventListener('pause', updatePlayIcon);
+    videoElement.addEventListener('playing', () => { liveBadge.classList.remove('hidden'); updatePlayIcon(); });
+    videoElement.addEventListener('loadstart', () => liveBadge.classList.add('hidden'));
+
+    ctrlSkipBack.onclick = function(e) {
+        e.stopPropagation();
+        videoElement.currentTime = Math.max(0, videoElement.currentTime - 10);
+    };
+    ctrlSkipFwd.onclick = function(e) {
+        e.stopPropagation();
+        const max = isFinite(videoElement.duration) ? videoElement.duration : (videoElement.seekable.length ? videoElement.seekable.end(videoElement.seekable.length - 1) : videoElement.currentTime + 10);
+        videoElement.currentTime = Math.min(max, videoElement.currentTime + 10);
+    };
+
+    function updateMuteIcon() {
+        const icon = videoElement.muted || videoElement.volume === 0 ? 'fa-volume-xmark' : 'fa-volume-high';
+        ctrlMute.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+    }
+    ctrlMute.onclick = function(e) {
+        e.stopPropagation();
+        videoElement.muted = !videoElement.muted;
+        updateMuteIcon();
+    };
+    updateMuteIcon();
+
+    ctrlFullscreen.onclick = function(e) {
+        e.stopPropagation();
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+    };
+    function updateFullscreenIcon() {
+        const isFs = !!document.fullscreenElement;
+        ctrlFullscreen.innerHTML = isFs
+            ? '<i class="fa-solid fa-compress"></i> <span class="fs-label">নর্মাল</span>'
+            : '<i class="fa-solid fa-expand"></i> <span class="fs-label">পূর্ণ স্ক্রিন</span>';
+        // ফুলস্ক্রিনে গেলে অটোমেটিক ল্যান্ডস্কেপ লক, বের হলে আনলক
+        if (isFs) {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(err => console.log('⚠️ Orientation lock failed:', err));
+            }
+        } else {
+            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+        }
+    }
+    document.addEventListener('fullscreenchange', updateFullscreenIcon);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+
+    // ট্যাপ করলে কন্ট্রোল বার দেখাবে, নিষ্ক্রিয় থাকলে অটো-হাইড
+    let hideTimer = null;
+    function showControlsTemporarily() {
+        wrapper.classList.add('show-controls');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+            if (!videoElement.paused) wrapper.classList.remove('show-controls');
+        }, 3000);
+    }
+    wrapper.addEventListener('click', function(e) {
+        if (e.target.closest('.custom-control-bar') || e.target.closest('.big-play-btn')) return;
+        if (wrapper.classList.contains('show-controls')) {
+            togglePlayPause();
+        }
+        showControlsTemporarily();
+    });
+    videoElement.addEventListener('play', showControlsTemporarily);
+
+    // সময় ডিসপ্লে (লাইভ স্ট্রিমে সাধারণত "লাইভ" দেখাবে)
+    const ctrlTime = document.getElementById('ctrlTime');
+    videoElement.addEventListener('timeupdate', () => {
+        if (!isFinite(videoElement.duration) || videoElement.duration > 3600 * 6) {
+            ctrlTime.textContent = 'লাইভ';
+        } else {
+            const s = Math.floor(videoElement.currentTime);
+            ctrlTime.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        }
+    });
+
+    updatePlayIcon();
+}
+  // =============================================
+// 📌 টাস্ক এড গেট
+// =============================================
+function triggerAdGateLockOverlay(channelKey) {
+    const overlay = document.getElementById('forcedTaskAdGate');
+    overlay.classList.remove('hidden');
+    document.getElementById('adGateInitialView').classList.remove('hidden');
+    document.getElementById('adGateActiveStreamingView').classList.add('hidden');
+    overlay.dataset.targetNode = channelKey;
+}
+window.startInlineIframeAdEngine = function() {
+    const overlay = document.getElementById('forcedTaskAdGate');
+    const channelKey = overlay.dataset.targetNode;
+    document.getElementById('adGateInitialView').classList.add('hidden');
+    document.getElementById('adGateActiveStreamingView').classList.remove('hidden');
+    document.getElementById('inlineAdGateSandboxFrame').src = globalTaskAdConfig.url;
+    let secondsLeft = 12;
+    const clock = document.getElementById('countdownClockDisplay');
+    const bar = document.getElementById('countdownProgressBar');
+    clock.innerText = secondsLeft;
+    bar.style.width = "100%";
+    const countdownInterval = setInterval(() => {
+        secondsLeft--;
+        clock.innerText = secondsLeft;
+        bar.style.width = `${(secondsLeft / 12) * 100}%`;
+        if (secondsLeft <= 0) {
+            clearInterval(countdownInterval);
+            localStorage.setItem(`task_gate_v5_${channelKey}`, "PASSED");
+            localStorage.setItem(`task_time_v5_${channelKey}`, Date.now().toString());
+            document.getElementById('forcedTaskAdGate').classList.add('hidden');
+            document.getElementById('inlineAdGateSandboxFrame').src = "about:blank";
+            executeStreamingPlayback(channelKey);
+        }
+    }, 1000);
+};
+
+// =============================================
+// 📌 ডাটাবেস লিসেনার
+// =============================================
+db.ref('categories').on('value', snap => {
+    masterCategories = snap.val() || {};
+    renderCategories();
+});
+db.ref('channels').on('value', snap => {
+    masterChannels = snap.val() || {};
+    renderChannelsViewHub();
+});
+db.ref('noticeConfig').on('value', snap => {
+    const data = snap.val();
+    const tickerBar = document.getElementById('tickerNoticeBar');
+    const tickerText = document.getElementById('tickerText');
+    if (data && data.status && data.text && data.text.trim() !== "") {
+        tickerText.innerText = data.text;
+        tickerBar.classList.remove('hidden');
+    } else {
+        tickerBar.classList.add('hidden');
+    }
+});
+db.ref('playerNoticeConfig').on('value', snap => {
+    const data = snap.val();
+    const box = document.getElementById('playerSubNoticeBox');
+    if (data && data.status && data.text && data.text.trim() !== "") {
+        document.getElementById('playerSubNoticeText').innerText = data.text;
+        box.classList.remove('hidden');
+    } else {
+        box.classList.add('hidden');
+    }
+});
+db.ref('popupConfig').on('value', snap => {
+    const data = snap.val();
+    const modal = document.getElementById('premiumBroadcastModal');
+    const modalContent = document.getElementById('broadcastModalContentText');
+    if (data && data.status && data.text && data.text.trim() !== "") {
+        const lastPopupSeen = sessionStorage.getItem('broadcastSeenToken');
+        if (lastPopupSeen !== data.text) {
+            modalContent.innerText = data.text;
+            modal.classList.remove('hidden');
+        }
+    } else {
+        modal.classList.add('hidden');
+    }
+});
+db.ref('bannerConfig').on('value', snap => {
+    const data = snap.val();
+    const container = document.getElementById('adminBannerContainer');
+    const anchor = document.getElementById('adminBannerAnchor');
+    const img = document.getElementById('adminBannerImage');
+    if (data && data.status && data.url && data.url.trim() !== "") {
+        img.src = data.url;
+        anchor.href = data.link || "#";
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
+});
+db.ref('adConfig').on('value', snap => { if (snap.exists()) globalAdConfig = snap.val(); });
+db.ref('taskAdConfig').on('value', snap => { if (snap.exists()) globalTaskAdConfig = snap.val(); });
+db.ref('notificationConfig').on('value', snap => {
+    const data = snap.val();
+    const box = document.getElementById('pushNotificationBox');
+    if (data && data.status) {
+        document.getElementById('notifImg').src = data.imageUrl || "";
+        document.getElementById('notifTitle').innerText = data.title || "নতুন আপডেট";
+        document.getElementById('notifDesc').innerText = data.message || "";
+        box.classList.remove('hidden');
+        setTimeout(() => { box.classList.add('hidden'); }, 8000);
+    } else {
+        box.classList.add('hidden');
+    }
+});
+          // =============================================
+        // 📌 ইনিশিয়ালাইজেশন
+        // =============================================
+        document.addEventListener("DOMContentLoaded", () => {
+            // কাস্টম hls.js প্লেয়ার ও কন্ট্রোল বার ইনিট
+            initCustomPlayerControls();
+
+            // স্প্ল্যাশ স্ক্রিন
+            setTimeout(() => {
+                const splash = document.getElementById('appSplashScreen');
+                if (splash) {
+                    splash.style.opacity = '0';
+                    setTimeout(() => splash.style.display = 'none', 800);
+                }
+            }, 2800);
+        });
+
+        console.log('🔥 ToffeePlus Ultimate Player Loaded!');
+        console.log('🎬 hls.js Native Player | Smart Buffering | Auto-Recovery | Custom Controls');
+        console.log('📱 Fully Responsive for TV/Desktop/Mobile');
+        console.log('🔄 Auto-Landscape on Fullscreen enabled');
+    </script>
+</body>
+</html>
